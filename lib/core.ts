@@ -1,0 +1,8 @@
+import { env } from 'cloudflare:workers';
+export function json(value:unknown,status=200){return Response.json(value,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}})}
+export function db(){if(!env.DB)throw new Error('Account storage is unavailable');return env.DB}
+export function checkWrite(r:Request){const origin=r.headers.get('origin');if(origin!==new URL(r.url).origin)throw new Error('Request origin is invalid');if(!r.headers.get('content-type')?.includes('application/json'))throw new Error('JSON is required')}
+export async function account(r:Request){const id=r.headers.get('oai-authenticated-user-id'),email=r.headers.get('oai-authenticated-user-email');if(!id||!email)throw new Error('Sign in to continue');let name=r.headers.get('oai-authenticated-user-full-name')||email.split('@')[0];if(r.headers.get('oai-authenticated-user-full-name-encoding')==='percent-encoded-utf-8'){try{name=decodeURIComponent(name)}catch{}}
+// The first visitor is the owner while hosting access remains owner-only.
+await db().prepare("INSERT OR IGNORE INTO accounts (id,email,name,role,created) SELECT ?,?,?,CASE WHEN EXISTS(SELECT 1 FROM accounts) THEN 'member' ELSE 'admin' END,?").bind(id,email,name,new Date().toISOString()).run();const row=await db().prepare('SELECT * FROM accounts WHERE id=?').bind(id).first<any>();if(row.disabled)throw new Error('This account is disabled');return row}
+export async function body(r:Request){if(Number(r.headers.get('content-length')||0)>160000)throw new Error('Data is too large');const raw=await r.text();if(raw.length>160000)throw new Error('Data is too large');return JSON.parse(raw)}
