@@ -1,29 +1,34 @@
 # Musab X
 
-A personal web workspace built with React, Vinext, Cloudflare Workers, and D1.
+A personal web workspace with internal search, tabs, public-page reading, bookmarks, notes, synced accounts, and administrator controls.
+
+## Run from GitHub on Cloudflare
+
+The independent build runs entirely on your Cloudflare Workers account with your own D1 database. It has no chatgpt.site runtime dependency. GitHub stores the code and can trigger deployments. GitHub Pages cannot run this application's server or database.
+
+Start with [CLOUDFLARE_SETUP.md](CLOUDFLARE_SETUP.md). It covers repository import, database creation, GitHub sign-in, settings, and exact build/deploy commands. The repository is https://github.com/musabiscool777-tech/musab-x.
+
+- `npm run build:independent`: build the independent Cloudflare Worker.
+- `npm test`: run search and account security regression checks.
+- `.github/workflows/deploy-cloudflare.yml`: optional GitHub Actions deployments, disabled until `CLOUDFLARE_DEPLOY_ENABLED=true` is set.
 
 ## Features
-- Bing web/news search feeds and video links work without an API key, with automatic fallback if the Google connection fails.
-- Google results integration through SerpAPI, with web, image, news, and video tabs, pagination, quick answers, and related searches. Requires a configured SERPAPI_KEY.
-- Public-page reader with links that open inside the workspace, without requiring account sign-in.
-- YouTube video links open in an embedded player when embedding is allowed.
-- Live embedded view where destination sites permit it.
-- Account-owned bookmarks, history, notes, settings, and JSON export.
-- ChatGPT sign-in, administrator roles, and member enable/disable controls.
-- Responsive dark and light themes, a simplified homepage, recent visits, and focused/wide reading.
-- Signed-out bookmarks, notes, history, and preferences save locally in the browser; signed-in workspaces retain account sync.
+
+- Bing web/news search feeds and video links without a search API key; automatic fallback if the optional Google connection fails.
+- Optional Google web/image/news/video search through SerpAPI, including pagination and related searches. Requires `SERPAPI_KEY` in Worker runtime secrets.
+- Public-page Reader with internal links; Live view where destination sites allow embedding; embedded YouTube videos where permitted.
+- GitHub sign-in on the independent host, secure cookie sessions, per-account D1 storage, owner and member roles, and member enable/disable controls.
+- Local guest bookmarks, history, notes, and settings; account sync for signed-in users.
+- JSON export/import for transfers, dark/light themes, recent visits, and focused/wide reading.
 
 ## Limits
-Reader view extracts public HTML text; it does not run destination scripts, submit forms, or handle external website accounts. Live view is subject to embedding policies and browser cookie rules. External logins and unsupported sites must open on the original website. Links inside a cross-origin live frame cannot be intercepted as workspace tabs. Direct search-page scraping is not used. A connected search service is required for inline Google results. Without it, the app displays Bing RSS search results inside the workspace. Bing feed results are for personal, non-commercial use and may be rate-limited or unavailable. Feed Safe Search behavior may differ from Google. Image results and Google pagination require the Google connection. This app does not make browsing anonymous.
 
-The application supports public hosting. Set OWNER_EMAIL in the hosted runtime to assign the owner administrator access; other visitors join as members. Owner access cannot be disabled or demoted through member management. Account data is isolated by authenticated Site identity, with server-side role checks and optimistic concurrency on saves.
+Reader extracts public HTML text; it does not run destination scripts or operate external accounts. Some sites reject server reading or embedded views. External logins and unsupported pages need the original website. Cross-origin frame navigation cannot be intercepted as workspace tabs. The application does not make browsing anonymous.
 
-## Optional Google search setup
-Configure SERPAPI_KEY as a secret in the hosted Site runtime, then deploy the current saved version to apply it. The key must belong to the site owner and have available search quota. The app sends queries to SerpAPI to retrieve Google results. Credentials remain server-side. No subscription or billing is automatically enabled. Google features are shown when the service returns them; this does not reproduce every Google interface feature or make arbitrary sites embeddable.
+Bing feed results are for personal, non-commercial use; they can be rate-limited or unavailable. Feed filtering can differ from Google Safe Search. Google image results and pagination require the optional Google connection. Provider credentials remain server-side.
 
-## Development
-Run `node tests/search.test.mjs` for search parsing and fallback regression checks.
-Run `npm run install:ci`, `npm run db:generate` after schema changes, and `npm run build`. The Sites helper builds and packages production assets. D1 migrations are applied during deployment. Secrets and connection tokens must never be committed.
+## Moving existing data
 
-## GitHub
-The connected GitHub tools currently cannot create a repository. This source is ready to upload to a new repository named `musab-x`; the deployed Site source is tracked separately.
+The independent host creates a new D1 database and identifies users by their verified GitHub account. It does not automatically transfer the previous host's accounts or data. On the previous host, use Settings → Export data. On the independent host, sign in and use Settings → Import data. Import validates the JSON and asks before replacing existing workspace data. Each user imports their own export.
+
+The historical Sites configuration remains available for compatibility with the original deployment; independent builds use `vite.independent.config.ts`, `wrangler.independent.json`, and `worker/index.ts` instead. Do not use the default Sites build command for the independent host.

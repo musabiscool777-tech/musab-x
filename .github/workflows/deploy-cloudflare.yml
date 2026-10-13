@@ -1,0 +1,51 @@
+name: Deploy Musab X
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: musab-x-production
+  cancel-in-progress: false
+jobs:
+  deploy:
+    # A clean clone works before hosting is configured. Enable deployment after setup.
+    if: ${{ vars.CLOUDFLARE_DEPLOY_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_D1_DATABASE_ID: ${{ vars.CLOUDFLARE_D1_DATABASE_ID }}
+      APP_ORIGIN: ${{ vars.APP_ORIGIN }}
+      GITHUB_CLIENT_ID: ${{ vars.MUSAB_GITHUB_CLIENT_ID }}
+      OWNER_GITHUB_ID: ${{ vars.OWNER_GITHUB_ID }}
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '11.25.0'
+          run_install: false
+      - name: Install dependencies
+        run: npm run install:ci
+      - name: Validate deployment configuration
+        run: node scripts/configure-independent.mjs
+      - name: Run regression checks
+        run: npm test
+      - name: Check types
+        run: node node_modules/typescript/bin/tsc --noEmit
+      - name: Build independent worker
+        run: npm run build:independent
+      - name: Migrate account database
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: node node_modules/wrangler/bin/wrangler.js d1 migrations apply musab-x --remote --config wrangler.independent.json
+      - name: Deploy worker with sign-in secret
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          MUSAB_GITHUB_CLIENT_SECRET: ${{ secrets.MUSAB_GITHUB_CLIENT_SECRET }}
+        run: node scripts/deploy-independent.mjs

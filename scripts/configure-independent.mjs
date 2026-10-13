@@ -1,0 +1,10 @@
+import {readFileSync,writeFileSync} from 'node:fs';
+const config=JSON.parse(readFileSync('wrangler.independent.json','utf8'));
+const {CLOUDFLARE_D1_DATABASE_ID,APP_ORIGIN,GITHUB_CLIENT_ID,OWNER_GITHUB_ID}=process.env;
+if(!CLOUDFLARE_D1_DATABASE_ID||!/^[-a-f0-9]{36}$/i.test(CLOUDFLARE_D1_DATABASE_ID)||CLOUDFLARE_D1_DATABASE_ID.startsWith('00000000-'))throw new Error('Set CLOUDFLARE_D1_DATABASE_ID to the ID returned by Cloudflare D1 creation.');
+const origin=new URL(APP_ORIGIN||'');if(origin.protocol!=='https:'||origin.origin!==APP_ORIGIN)throw new Error('APP_ORIGIN must be the HTTPS site origin, without a trailing slash.');
+if(!GITHUB_CLIENT_ID||!/^\d+$/.test(OWNER_GITHUB_ID||''))throw new Error('Set GITHUB_CLIENT_ID and OWNER_GITHUB_ID.');
+config.d1_databases[0].database_id=CLOUDFLARE_D1_DATABASE_ID;
+config.vars={AUTH_MODE:'github',APP_ORIGIN,GITHUB_CLIENT_ID,OWNER_GITHUB_ID};
+writeFileSync('wrangler.independent.json',JSON.stringify(config,null,2)+'\n');
+console.log('Independent hosting configuration prepared.');
