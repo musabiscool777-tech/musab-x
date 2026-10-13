@@ -1,6 +1,4 @@
-import { z } from 'zod';
+import {workspace} from '../../../lib/workspace';
 import { account,body,checkWrite,db,json } from '../../../lib/core';
-const entry=z.object({id:z.string().max(100),title:z.string().max(1000),url:z.string().max(4000),date:z.string().max(100).optional()});
-const workspace=z.object({bookmarks:z.array(entry).max(250),history:z.array(entry).max(200),notes:z.string().max(20000),settings:z.object({theme:z.enum(['dark','light']),newTab:z.boolean(),history:z.boolean(),safe:z.enum(['strict','moderate']),view:z.enum(['reader','live'])})});
 export async function GET(r:Request){try{const a=await account(r);return json({...a,data:JSON.parse(a.data)})}catch(e){return json({error:(e as Error).message},401)}}
 export async function PUT(r:Request){try{checkWrite(r);const a=await account(r);const b=await body(r);const validated=workspace.safeParse(b.data);if(!validated.success||!Number.isInteger(b.version)||b.version<0)return json({error:'Invalid workspace data'},400);const update=await db().prepare('UPDATE accounts SET data=?, version=version+1, name=? WHERE id=? AND version=?').bind(JSON.stringify(validated.data),String(b.name||a.name).slice(0,60),a.id,b.version).run();if(!update.meta.changes)return json({error:'Workspace changed on another device. Reload before saving.'},409);return json({version:b.version+1})}catch(e){return json({error:(e as Error).message},400)}}

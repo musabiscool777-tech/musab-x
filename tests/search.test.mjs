@@ -1,0 +1,43 @@
+import assert from 'node:assert/strict';
+import {mkdtempSync,readFileSync,writeFileSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {pathToFileURL} from 'node:url';
+import ts from 'typescript';
+
+const dir=mkdtempSync(join(tmpdir(),'musab-search-'));
+const originalFetch=globalThis.fetch;
+try{
+ const compile=(source,name)=>writeFileSync(join(dir,name),ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);
+ compile(readFileSync('lib/web.ts','utf8'),'web.mjs');
+ compile(readFileSync('lib/search.ts','utf8').replace("'./web'","'./web.mjs'"),'search.mjs');
+ compile(readFileSync('lib/search-feed.ts','utf8').replace("'./search'","'./search.mjs'"),'feed.mjs');
+ const {feedResults,feedText,searchFeed}=await import(pathToFileURL(join(dir,'feed.mjs')));
+ assert.equal(feedText('A &amp; B &#x1F680;'), 'A & B 🚀');
+ const feed='<rss><channel><item><title>NASA &amp; space</title><link>https://www.nasa.gov/</link><description><![CDATA[<b>Explore</b> space]]></description></item><item><link>https://www.nasa.gov/</link></item><item><link>http://127.0.0.1/</link></item><item><link>javascript:alert(1)</link></item></channel></rss>';
+ assert.deepEqual(feedResults(feed).map(r=>[r.title,r.url,r.snippet]),[['NASA & space','https://www.nasa.gov/','Explore space']]);
+ assert.throws(()=>feedResults('<html>Access denied</html>'));
+ assert.throws(()=>feedResults('<!DOCTYPE rss><rss/>'));
+ assert.deepEqual(feedResults('<rss><channel/></rss>'),[]);
+ let called;
+ globalThis.fetch=async(url)=>{called=new URL(url);return new Response(feed)};
+ assert.equal((await searchFeed('space & stars','videos','strict')).length,1);
+ assert.equal(called.searchParams.get('q'),'space & stars site:youtube.com/watch');
+ assert.equal(called.searchParams.get('adlt'),'strict');
+ const route=readFileSync('app/api/search/route.ts','utf8').replace("import {env} from 'cloudflare:workers';",'const env=globalThis.searchTestEnv;').replace("import {json} from '../../../lib/core';",'const json=(value,status=200)=>Response.json(value,{status});').replace("'../../../lib/search'","'./search.mjs'").replace("'../../../lib/search-feed'","'./feed.mjs'");
+ globalThis.searchTestEnv={};compile(route,'route.mjs');
+ const {GET}=await import(pathToFileURL(join(dir,'route.mjs')));
+ assert.equal((await GET(new Request('https://musab.test/api/search?q='))).status,400);
+ let result=await (await GET(new Request('https://musab.test/api/search?q=NASA'))).json();
+ assert.equal(result.provider,'Bing');assert.equal(result.results.length,1);assert.equal(result.hasNext,false);
+ result=await (await GET(new Request('https://musab.test/api/search?q=photos&type=images'))).json();
+ assert.equal(result.type,'web');assert.ok(result.notice);assert.ok(!result.availableTypes.includes('images'));
+ globalThis.searchTestEnv.SERPAPI_KEY='test-placeholder';
+ globalThis.fetch=async(url)=>String(url).includes('serpapi.com')?new Response('{}',{status:429}):new Response(feed);
+ result=await (await GET(new Request('https://musab.test/api/search?q=quota'))).json();assert.equal(result.provider,'Bing');
+ globalThis.fetch=async()=>new Response(JSON.stringify({organic_results:[{title:'Google result',link:'https://www.nasa.gov/'}],serpapi_pagination:{next:'next'}}));
+ result=await (await GET(new Request('https://musab.test/api/search?q=connected'))).json();assert.equal(result.provider,'Google');assert.equal(result.hasNext,true);
+ globalThis.fetch=async()=>{throw new Error('Network unavailable')};
+ assert.equal((await GET(new Request('https://musab.test/api/search?q=offline'))).status,503);
+ console.log('Passed search parsing, URL filtering, query encoding, missing-key fallback, quota fallback, Google results, and outage handling.');
+}finally{globalThis.fetch=originalFetch;delete globalThis.searchTestEnv;rmSync(dir,{recursive:true,force:true})}
