@@ -16,16 +16,17 @@ Start with [CLOUDFLARE_SETUP.md](CLOUDFLARE_SETUP.md). It covers repository impo
 
 - Bing web/news search feeds and video links without a search API key; automatic fallback if the optional Google connection fails.
 - Optional Google web/image/news/video search through SerpAPI, including pagination and related searches. Requires `SERPAPI_KEY` in Worker runtime secrets.
-- Public-page Reader with internal links; Live view where destination sites allow embedding; embedded YouTube videos where permitted.
+- Public page view with images, native video, supported embedded players, and internal links; Live view where destination sites allow embedding; embedded YouTube videos where permitted.
 - GitHub sign-in on the independent host, secure cookie sessions, per-account D1 storage, owner and member roles, and member enable/disable controls.
 - Local guest bookmarks, history, notes, and settings; account sync for signed-in users.
+- Fullscreen viewing and wide, readable search results with image/video grids.
 - JSON export/import for transfers, dark/light themes, recent visits, and focused/wide reading.
 
 ## Limits
 
-Reader extracts public HTML text; it does not run destination scripts or operate external accounts. Some sites reject server reading or embedded views. External logins and unsupported pages need the original website. Cross-origin frame navigation cannot be intercepted as workspace tabs. The application does not make browsing anonymous.
+Page view uses Musab X styling for public HTML, images, videos, and supported embeds; it does not run destination scripts or operate external accounts. Some sites reject server reading or embedded views. External logins and unsupported pages need the original website. Cross-origin frame navigation cannot be intercepted as workspace tabs. The application does not make browsing anonymous.
 
-Bing feed results are for personal, non-commercial use; they can be rate-limited or unavailable. Feed filtering can differ from Google Safe Search. Google image results and pagination require the optional Google connection. Provider credentials remain server-side.
+Bing feed results are for personal, non-commercial use; they can be rate-limited or unavailable. Feed filtering can differ from Google Safe Search. Without Google credentials, image search uses Wikimedia Commons (with source/license links and no Safe Search filtering). Google image results and pagination require the optional Google connection. Provider credentials remain server-side.
 
 ## Moving existing data
 

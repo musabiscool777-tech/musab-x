@@ -9,6 +9,8 @@ const dir=mkdtempSync(join(tmpdir(),'musab-search-'));
 const originalFetch=globalThis.fetch;
 try{
  const compile=(source,name)=>writeFileSync(join(dir,name),ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);
+ compile(readFileSync('lib/media.ts','utf8'),'media.mjs');
+ compile(readFileSync('lib/image-search.ts','utf8').replace("'./search'","'./search.mjs'"),'images.mjs');
  compile(readFileSync('lib/web.ts','utf8'),'web.mjs');
  compile(readFileSync('lib/search.ts','utf8').replace("'./web'","'./web.mjs'"),'search.mjs');
  compile(readFileSync('lib/search-feed.ts','utf8').replace("'./search'","'./search.mjs'"),'feed.mjs');
@@ -24,14 +26,15 @@ try{
  assert.equal((await searchFeed('space & stars','videos','strict')).length,1);
  assert.equal(called.searchParams.get('q'),'space & stars site:youtube.com/watch');
  assert.equal(called.searchParams.get('adlt'),'strict');
- const route=readFileSync('app/api/search/route.ts','utf8').replace("import {env} from 'cloudflare:workers';",'const env=globalThis.searchTestEnv;').replace("import {json} from '../../../lib/core';",'const json=(value,status=200)=>Response.json(value,{status});').replace("'../../../lib/search'","'./search.mjs'").replace("'../../../lib/search-feed'","'./feed.mjs'");
+ const route=readFileSync('app/api/search/route.ts','utf8').replace("import {env} from 'cloudflare:workers';",'const env=globalThis.searchTestEnv;').replace("import {json} from '../../../lib/core';",'const json=(value,status=200)=>Response.json(value,{status});').replace("'../../../lib/search'","'./search.mjs'").replace("'../../../lib/search-feed'","'./feed.mjs'").replace("'../../../lib/image-search'","'./images.mjs'").replace("'../../../lib/media'","'./media.mjs'");
  globalThis.searchTestEnv={};compile(route,'route.mjs');
  const {GET}=await import(pathToFileURL(join(dir,'route.mjs')));
  assert.equal((await GET(new Request('https://musab.test/api/search?q='))).status,400);
  let result=await (await GET(new Request('https://musab.test/api/search?q=NASA'))).json();
  assert.equal(result.provider,'Bing');assert.equal(result.results.length,1);assert.equal(result.hasNext,false);
+ globalThis.fetch=async()=>Response.json({query:{pages:[{title:'File:Space.jpg',index:1,imageinfo:[{url:'https://upload.wikimedia.org/image.jpg',thumburl:'https://upload.wikimedia.org/thumb.jpg',mime:'image/jpeg',descriptionurl:'https://commons.wikimedia.org/wiki/File:Space.jpg'}]}]}});
  result=await (await GET(new Request('https://musab.test/api/search?q=photos&type=images'))).json();
- assert.equal(result.type,'web');assert.ok(result.notice);assert.ok(!result.availableTypes.includes('images'));
+ assert.equal(result.type,'images');assert.equal(result.provider,'Wikimedia Commons');assert.equal(result.results.length,1);assert.ok(result.availableTypes.includes('images'));
  globalThis.searchTestEnv.SERPAPI_KEY='test-placeholder';
  globalThis.fetch=async(url)=>String(url).includes('serpapi.com')?new Response('{}',{status:429}):new Response(feed);
  result=await (await GET(new Request('https://musab.test/api/search?q=quota'))).json();assert.equal(result.provider,'Bing');

@@ -1,6 +1,8 @@
 import {env} from 'cloudflare:workers';
 import {json} from '../../../lib/core';
 import {searchResults,type SearchType} from '../../../lib/search';
+import {searchImages} from '../../../lib/image-search';
+import {youtubeVideo} from '../../../lib/media';
 import {searchFeed} from '../../../lib/search-feed';
 const cache=new Map<string,{expires:number,value:unknown}>();
 function remember(key:string,value:unknown){cache.set(key,{expires:Date.now()+300000,value});if(cache.size>60)cache.delete(cache.keys().next().value!);return json(value)}
@@ -18,10 +20,11 @@ export async function GET(r:Request){
    if(response.ok){const data:any=await response.json();if(!data.error)return remember(key,{query:q,provider:'Google',type:requested,start,...searchResults(data,requested),direct:'https://www.google.com/search?q='+encodeURIComponent(q),hasNext:!!data.serpapi_pagination?.next&&start<90,availableTypes:['web','images','news','videos'],notice:null})}
   }catch{ /* Continue with the public feed when Google is unavailable. */ }
  }
- const type=requested==='images'?'web':requested;
+ if(requested==='images'){try{return remember(key,{query:q,provider:'Wikimedia Commons',type:'images',start:0,results:await searchImages(q),related:[],answer:null,direct:'https://commons.wikimedia.org/w/index.php?search='+encodeURIComponent(q),hasNext:false,availableTypes:['web','images','news','videos'],notice:'Images from Wikimedia Commons. This source does not provide Safe Search filtering.'})}catch{return json({error:'Image search is temporarily unavailable. Try again in a moment.'},503)}}
+ const type=requested;
  const direct='https://www.bing.com/'+(type==='news'?'news/':'')+'search?'+new URLSearchParams({q,adlt:safe}).toString();
  try{
-  const results=await searchFeed(q,type,safe);
-  return remember(key,{query:q,provider:'Bing',type,start:0,results,related:[],answer:null,direct,hasNext:false,availableTypes:['web','news','videos'],notice:requested==='images'?'Image search needs the Google connection. Showing web results.':type==='videos'?'Video links from Bing. Select a video to play it here when embedding is allowed.':null});
+  const rows=await searchFeed(q,type,safe);const results=rows.map(row=>{const video=youtubeVideo(row.url);return {...row,thumbnail:video?'https://i.ytimg.com/vi/'+video+'/hqdefault.jpg':row.thumbnail}});
+  return remember(key,{query:q,provider:'Bing',type,start:0,results,related:[],answer:null,direct,hasNext:false,availableTypes:['web','images','news','videos'],notice:type==='videos'?'Video links from Bing. Select a video to play it here when embedding is allowed.':null});
  }catch{return json({error:'Search is temporarily unavailable. Try again in a moment.',direct},503)}
 }
