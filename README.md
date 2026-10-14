@@ -14,7 +14,7 @@ Start with [CLOUDFLARE_SETUP.md](CLOUDFLARE_SETUP.md). It covers repository impo
 
 ## Features
 
-- Bing web/news search feeds and video links without a search API key; automatic fallback if the optional Google connection fails.
+- Bing web/news search feeds, YouTube links when returned, and an Internet Archive video fallback without a search API key; automatic fallback if the optional Google connection fails.
 - Optional Google web/image/news/video search through SerpAPI, including pagination and related searches. Requires `SERPAPI_KEY` in Worker runtime secrets.
 - Public page view with images, native video, supported embedded players, and internal links; Live view where destination sites allow embedding; embedded YouTube videos where permitted.
 - GitHub sign-in on the independent host, secure cookie sessions, per-account D1 storage, owner and member roles, and member enable/disable controls.

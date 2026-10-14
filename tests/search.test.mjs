@@ -14,6 +14,7 @@ try{
  compile(readFileSync('lib/web.ts','utf8'),'web.mjs');
  compile(readFileSync('lib/search.ts','utf8').replace("'./web'","'./web.mjs'"),'search.mjs');
  compile(readFileSync('lib/search-feed.ts','utf8').replace("'./search'","'./search.mjs'"),'feed.mjs');
+ compile(readFileSync('lib/video-search.ts','utf8').replace("'./search-feed'","'./feed.mjs'"),'videos.mjs');
  const {feedResults,feedText,searchFeed}=await import(pathToFileURL(join(dir,'feed.mjs')));
  assert.equal(feedText('A &amp; B &#x1F680;'), 'A & B 🚀');
  const feed='<rss><channel><item><title>NASA &amp; space</title><link>https://www.nasa.gov/</link><description><![CDATA[<b>Explore</b> space]]></description></item><item><link>https://www.nasa.gov/</link></item><item><link>http://127.0.0.1/</link></item><item><link>javascript:alert(1)</link></item></channel></rss>';
@@ -26,7 +27,7 @@ try{
  assert.equal((await searchFeed('space & stars','videos','strict')).length,1);
  assert.equal(called.searchParams.get('q'),'space & stars site:youtube.com/watch');
  assert.equal(called.searchParams.get('adlt'),'strict');
- const route=readFileSync('app/api/search/route.ts','utf8').replace("import {env} from 'cloudflare:workers';",'const env=globalThis.searchTestEnv;').replace("import {json} from '../../../lib/core';",'const json=(value,status=200)=>Response.json(value,{status});').replace("'../../../lib/search'","'./search.mjs'").replace("'../../../lib/search-feed'","'./feed.mjs'").replace("'../../../lib/image-search'","'./images.mjs'").replace("'../../../lib/media'","'./media.mjs'");
+ const route=readFileSync('app/api/search/route.ts','utf8').replace("import {env} from 'cloudflare:workers';",'const env=globalThis.searchTestEnv;').replace("import {json} from '../../../lib/core';",'const json=(value,status=200)=>Response.json(value,{status});').replace("'../../../lib/search'","'./search.mjs'").replace("'../../../lib/search-feed'","'./feed.mjs'").replace("'../../../lib/image-search'","'./images.mjs'").replace("'../../../lib/media'","'./media.mjs'").replace("'../../../lib/video-search'","'./videos.mjs'");
  globalThis.searchTestEnv={};compile(route,'route.mjs');
  const {GET}=await import(pathToFileURL(join(dir,'route.mjs')));
  assert.equal((await GET(new Request('https://musab.test/api/search?q='))).status,400);
@@ -35,6 +36,8 @@ try{
  globalThis.fetch=async()=>Response.json({query:{pages:[{title:'File:Space.jpg',index:1,imageinfo:[{url:'https://upload.wikimedia.org/image.jpg',thumburl:'https://upload.wikimedia.org/thumb.jpg',mime:'image/jpeg',descriptionurl:'https://commons.wikimedia.org/wiki/File:Space.jpg'}]}]}});
  result=await (await GET(new Request('https://musab.test/api/search?q=photos&type=images'))).json();
  assert.equal(result.type,'images');assert.equal(result.provider,'Wikimedia Commons');assert.equal(result.results.length,1);assert.ok(result.availableTypes.includes('images'));
+ globalThis.fetch=async(url)=>String(url).includes('bing.com')?new Response(feed):Response.json({response:{docs:[{identifier:'nasa-video',title:'NASA launch',description:'<b>Launch</b>'},{identifier:'../invalid',title:'Invalid'}]}});
+ result=await (await GET(new Request('https://musab.test/api/search?q=NASA&type=videos'))).json();assert.equal(result.provider,'Internet Archive');assert.equal(result.results.length,1);assert.ok(result.results[0].thumbnail);
  globalThis.searchTestEnv.SERPAPI_KEY='test-placeholder';
  globalThis.fetch=async(url)=>String(url).includes('serpapi.com')?new Response('{}',{status:429}):new Response(feed);
  result=await (await GET(new Request('https://musab.test/api/search?q=quota'))).json();assert.equal(result.provider,'Bing');

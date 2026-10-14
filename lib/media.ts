@@ -6,6 +6,6 @@ export function mediaUrl(raw:unknown,base:string){
 }
 export function videoEmbed(raw:string){
  const youtube=youtubeVideo(raw);if(youtube)return 'https://www.youtube-nocookie.com/embed/'+youtube;
- try{const u=new URL(raw);if(u.hostname==='player.vimeo.com'&&/^\/video\/\d+$/.test(u.pathname))return u.origin+u.pathname}catch{}
+ try{const u=new URL(raw);if(['archive.org','www.archive.org'].includes(u.hostname)&&/^\/(details|embed)\/[-a-zA-Z0-9_.]{1,200}$/.test(u.pathname))return 'https://archive.org/embed/'+u.pathname.split('/')[2];if(u.hostname==='player.vimeo.com'&&/^\/video\/\d+$/.test(u.pathname))return u.origin+u.pathname}catch{}
  return null;
 }
