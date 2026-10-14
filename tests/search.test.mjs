@@ -38,6 +38,10 @@ try{
  assert.equal(result.type,'images');assert.equal(result.provider,'Wikimedia Commons');assert.equal(result.results.length,1);assert.ok(result.availableTypes.includes('images'));
  globalThis.fetch=async(url)=>String(url).includes('bing.com')?new Response(feed):Response.json({response:{docs:[{identifier:'nasa-video',title:'NASA launch',description:'<b>Launch</b>'},{identifier:'../invalid',title:'Invalid'}]}});
  result=await (await GET(new Request('https://musab.test/api/search?q=NASA&type=videos'))).json();assert.equal(result.provider,'Internet Archive');assert.equal(result.results.length,1);assert.ok(result.results[0].thumbnail);
+ globalThis.fetch=async(url)=>{if(String(url).includes('bing.com'))throw new Error('Feed offline');return Response.json({response:{docs:[{identifier:'backup-video',title:'Backup video'}]}})};
+ result=await (await GET(new Request('https://musab.test/api/search?q=feed-offline&type=videos'))).json();assert.equal(result.provider,'Internet Archive');assert.equal(result.results[0].title,'Backup video');
+ globalThis.fetch=async()=>{throw new Error('All providers offline')};
+ assert.equal((await GET(new Request('https://musab.test/api/search?q=all-offline&type=videos'))).status,503);
  globalThis.searchTestEnv.SERPAPI_KEY='test-placeholder';
  globalThis.fetch=async(url)=>String(url).includes('serpapi.com')?new Response('{}',{status:429}):new Response(feed);
  result=await (await GET(new Request('https://musab.test/api/search?q=quota'))).json();assert.equal(result.provider,'Bing');

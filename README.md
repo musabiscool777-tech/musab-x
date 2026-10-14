@@ -24,7 +24,7 @@ Start with [CLOUDFLARE_SETUP.md](CLOUDFLARE_SETUP.md). It covers repository impo
 
 ## Limits
 
-Page view uses Musab X styling for public HTML, images, videos, and supported embeds; it does not run destination scripts or operate external accounts. Some sites reject server reading or embedded views. External logins and unsupported pages need the original website. Cross-origin frame navigation cannot be intercepted as workspace tabs. The application does not make browsing anonymous.
+Page view uses a plain white surface with readable text and blue links for public HTML, images, videos, and supported embeds; it does not run destination scripts or operate external accounts. Some sites reject server reading or embedded views. External logins and unsupported pages need the original website. Cross-origin frame navigation cannot be intercepted as workspace tabs. The application does not make browsing anonymous.
 
 Bing feed results are for personal, non-commercial use; they can be rate-limited or unavailable. Feed filtering can differ from Google Safe Search. Without Google credentials, image search uses Wikimedia Commons (with source/license links and no Safe Search filtering). Google image results and pagination require the optional Google connection. Provider credentials remain server-side.
 

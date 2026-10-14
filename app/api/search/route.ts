@@ -25,7 +25,7 @@ export async function GET(r:Request){
  const type=requested;
  const direct='https://www.bing.com/'+(type==='news'?'news/':'')+'search?'+new URLSearchParams({q,adlt:safe}).toString();
  try{
-  const rows=await searchFeed(q,type,safe);let results=rows.map(row=>{const video=youtubeVideo(row.url);return {...row,thumbnail:video?'https://i.ytimg.com/vi/'+video+'/hqdefault.jpg':row.thumbnail}});
+  const rows=await searchFeed(q,type,safe).catch(error=>{if(type==='videos')return [];throw error});let results=rows.map(row=>{const video=youtubeVideo(row.url);return {...row,thumbnail:video?'https://i.ytimg.com/vi/'+video+'/hqdefault.jpg':row.thumbnail}});
   if(type==='videos'){results=results.filter(row=>!!youtubeVideo(row.url));if(!results.length)return remember(key,{query:q,provider:'Internet Archive',type,start:0,results:await searchArchiveVideos(q),related:[],answer:null,direct:'https://archive.org/search?query='+encodeURIComponent(q),hasNext:false,availableTypes:['web','images','news','videos'],notice:'Video results from Internet Archive. This source does not provide Safe Search filtering.'})}
   return remember(key,{query:q,provider:'Bing',type,start:0,results,related:[],answer:null,direct,hasNext:false,availableTypes:['web','images','news','videos'],notice:type==='videos'?'Video links from Bing. Select a video to play it here when embedding is allowed.':null});
  }catch{return json({error:'Search is temporarily unavailable. Try again in a moment.',direct},503)}
