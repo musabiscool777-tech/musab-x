@@ -87,7 +87,7 @@ Run **Actions → Deploy Musab X → Run workflow** for the first deployment. Su
 
 In **Workers & Pages → musab-x → Settings → Variables and Secrets**, add an encrypted runtime secret named `BROWSERLESS_TOKEN` using your Browserless API token. Do not use a public variable or commit the token. The code uses the San Francisco Chrome BrowserQL endpoint. Your plan must support BrowserQL and interactive LiveURL.
 
-The standard deployment command applies migration `0002_live_browser.sql`. After the build succeeds, open the Worker URL, sign in to Musab X with GitHub, and search. A remote browser appears beneath the address bar. Use its own controls for navigation, and the outer fullscreen button to expand only the viewer. Each session lasts up to two minutes and requires an explicit restart afterward. There are six starts per account per ten minutes. Browserless usage charges and plan limits apply.
+The standard deployment command applies migration `0002_live_browser.sql`. After the build succeeds, open the Worker URL, sign in to Musab X with GitHub, and search. A remote browser appears beneath the address bar. Search and click links within the displayed website; Browserless tabs and its extra address bar are hidden. Use the outer fullscreen button to expand only the viewer. Each session lasts up to two minutes and requires an explicit restart afterward. There are six starts per account per ten minutes. Browserless usage charges and plan limits apply.
 
 Existing runtime secrets are preserved by deployment. `SERPAPI_KEY` is only used by the legacy search API; it does not power the live browser.
 
