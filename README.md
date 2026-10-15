@@ -14,19 +14,19 @@ Start with [CLOUDFLARE_SETUP.md](CLOUDFLARE_SETUP.md). It covers repository impo
 
 ## Features
 
-- Bing web/news search feeds, YouTube links when returned, and an Internet Archive video fallback without a search API key; automatic fallback if the optional Google connection fails.
-- Optional Google web/image/news/video search through SerpAPI, including pagination and related searches. Requires `SERPAPI_KEY` in Worker runtime secrets.
-- Public page view with images, native video, supported embedded players, and internal links; Live view where destination sites allow embedding; embedded YouTube videos where permitted.
-- GitHub sign-in on the independent host, secure cookie sessions, per-account D1 storage, owner and member roles, and member enable/disable controls.
-- Local guest bookmarks, history, notes, and settings; account sync for signed-in users.
-- Fullscreen viewing and wide, readable search results with image/video grids.
-- JSON export/import for transfers, dark/light themes, recent visits, and focused/wide reading.
+- Live view only: original websites fill the area beneath the address bar, preserving their own layout, images, video, and scripts.
+- Searches navigate directly to Google's original search page. The browsing UI does not use the search-result API or public-page reader.
+- Website-only fullscreen: the live website container expands; the Musab X sidebar and address bar are outside fullscreen. Escape or Exit fullscreen returns to the workspace.
+- GitHub sign-in, secure cookie sessions, per-account D1 storage, owner/member roles, and member controls.
+- Guest bookmarks, history, notes, settings, and JSON export/import.
 
 ## Limits
 
-Page view uses a plain white surface with readable text and blue links for public HTML, images, videos, and supported embeds; it does not run destination scripts or operate external accounts. Some sites reject server reading or embedded views. External logins and unsupported pages need the original website. Cross-origin frame navigation cannot be intercepted as workspace tabs. The application does not make browsing anonymous.
+Google and destination websites control whether their pages may appear in an embedded frame. A direct Google URL is not a guarantee of embedding: consent screens, anti-bot challenges, cookies, or frame restrictions can prevent it. Use the small Open original control if a page is blank or blocked. No claim is made that all Google features work inside the frame.
 
-Bing feed results are for personal, non-commercial use; they can be rate-limited or unavailable. Feed filtering can differ from Google Safe Search. Without Google credentials, image search uses Wikimedia Commons (with source/license links and no Safe Search filtering). Google image results and pagination require the optional Google connection. Provider credentials remain server-side.
+Links and navigation inside a cross-origin website are controlled by that website. Musab X cannot inspect them, synchronize its outer address/history with those navigations, or force every popup into a workspace tab. Native page popups may open browser tabs. Native fullscreen requires browser support and a user click; otherwise the website expands over the workspace until Exit fullscreen.
+
+The server search and reader endpoints remain available for compatibility but are unused by Live browsing. No search API key is needed for this UI. Browsing does not make users anonymous.
 
 ## Moving existing data
 

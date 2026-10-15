@@ -83,9 +83,9 @@ Instead of Cloudflare Git integration, use the included workflow. In the GitHub 
 
 Run **Actions → Deploy Musab X → Run workflow** for the first deployment. Subsequent pushes to main deploy automatically. The workflow uses the `production` environment; any protection rules you configure there still apply.
 
-## Optional Google results
+## Live Google search
 
-Bing search feeds work without a search credential. If you want Google search and images, add `SERPAPI_KEY` as a secret to the **Worker runtime**, not a public build variable. The deployment preserves existing secrets.
+The current UI loads Google's original search page directly and needs no search API key. Google and other websites may block embedded viewing; use Open original when required. SERPAPI_KEY is used only by the retained legacy search API, not Live browsing.
 
 ## Transfer saved data
 
