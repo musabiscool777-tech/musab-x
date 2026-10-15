@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS live_browser_usage (
+ account_id TEXT PRIMARY KEY NOT NULL,
+ window_start INTEGER NOT NULL,
+ starts INTEGER NOT NULL DEFAULT 1
+);

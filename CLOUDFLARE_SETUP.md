@@ -83,9 +83,13 @@ Instead of Cloudflare Git integration, use the included workflow. In the GitHub 
 
 Run **Actions → Deploy Musab X → Run workflow** for the first deployment. Subsequent pushes to main deploy automatically. The workflow uses the `production` environment; any protection rules you configure there still apply.
 
-## Live Google search
+## Interactive live browser
 
-The current UI loads Google's original search page directly and needs no search API key. Google and other websites may block embedded viewing; use Open original when required. SERPAPI_KEY is used only by the retained legacy search API, not Live browsing.
+In **Workers & Pages → musab-x → Settings → Variables and Secrets**, add an encrypted runtime secret named `BROWSERLESS_TOKEN` using your Browserless API token. Do not use a public variable or commit the token. The code uses the San Francisco Chrome BrowserQL endpoint. Your plan must support BrowserQL and interactive LiveURL.
+
+The standard deployment command applies migration `0002_live_browser.sql`. After the build succeeds, open the Worker URL, sign in to Musab X with GitHub, and search. A remote browser appears beneath the address bar. Use its own controls for navigation, and the outer fullscreen button to expand only the viewer. Each session lasts up to two minutes and requires an explicit restart afterward. There are six starts per account per ten minutes. Browserless usage charges and plan limits apply.
+
+Existing runtime secrets are preserved by deployment. `SERPAPI_KEY` is only used by the legacy search API; it does not power the live browser.
 
 ## Transfer saved data
 

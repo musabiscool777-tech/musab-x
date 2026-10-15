@@ -8,6 +8,7 @@ declare namespace Cloudflare {
     OWNER_GITHUB_ID?: string;
     OWNER_EMAIL?: string;
     SERPAPI_KEY?: string;
+    BROWSERLESS_TOKEN?: string;
     BUCKET?: R2Bucket;
   }
 }
