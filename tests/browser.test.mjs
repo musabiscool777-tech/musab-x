@@ -55,6 +55,22 @@ try{
  ws.message(connectPacket(9,25));assert.equal(ws.sent.at(-1)[5],0x48);
  ws.message(packet(4,1,new Uint8Array([2])));assert.equal(sockets[0].didClose,true);
  ws.message(new Uint8Array([1]));assert.equal(ws.closed,true);service.shutdown();
+ // Exercise real workerd binary-frame delivery at the production compatibility date.
+ // A Node/FakeWS-only test misses the runtime's default Blob representation.
+ const runtimeSource=compile(readFileSync('lib/web.ts','utf8'))+'\n'+compile(readFileSync('browser/wisp.ts','utf8').replace("import {publicAddress} from '../lib/web';",''))+`
+ export default {fetch(){
+  const pair=new WebSocketPair();const initialType=pair[1].binaryType;let output;
+  acceptWisp(pair[1],()=>({opened:Promise.resolve(),closed:Promise.resolve(),readable:new ReadableStream({start(c){output=c}}),writable:new WritableStream({write(bytes){output.enqueue(bytes)}}),async close(){try{output.close()}catch{}}}),async()=> '8.8.8.8');
+  return new Response(null,{status:101,webSocket:pair[0],headers:{'X-Initial-Binary-Type':initialType}});
+ }};`;
+ const runtime=new Miniflare({modules:true,script:runtimeSource,compatibilityDate:'2026-05-15',compatibilityFlags:['nodejs_compat']});
+ try{
+  const upgraded=await runtime.dispatchFetch('https://browser.example/wisp/',{headers:{Upgrade:'websocket'}});assert.equal(upgraded.status,101);assert.equal(upgraded.headers.get('X-Initial-Binary-Type'),'blob');
+  const client=upgraded.webSocket;client.binaryType='arraybuffer';client.accept();
+  const echoed=new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('Runtime binary relay timed out')),5000);client.addEventListener('message',e=>{const data=new Uint8Array(e.data);if(data[0]===2){clearTimeout(timer);resolve(data)}});client.addEventListener('close',()=>{clearTimeout(timer);reject(new Error('Runtime rejected a binary frame'))})});
+  client.send(connectPacket(1));client.send(packet(2,1,new Uint8Array([0x16,0x03,0x01,0x00,0x05])));
+  assert.deepEqual([...await echoed],[2,1,0,0,0,0x16,0x03,0x01,0x00,0x05]);client.close();
+ }finally{await runtime.dispose()}
  // The isolated browser must never use the workspace origin for rewritten pages.
  const component=readFileSync('components/browser-view.tsx','utf8');assert.ok(component.includes("e.source!==iframe.current?.contentWindow"));assert.ok(component.includes("e.origin!==originRef.current"));assert.ok(!readFileSync('app/page.tsx','utf8').includes("api('/api/live'"));
  console.log('Passed one-use browser tickets, disabled/expired account rejection, isolated cookies, public-DNS pinning, Wisp handshake/FIFO/data/flow-control/close, and invalid packet checks.');

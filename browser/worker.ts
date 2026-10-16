@@ -1,6 +1,6 @@
 import {connect} from 'cloudflare:sockets';
 import {exchangeTicket,relayAccount} from './auth';
-import {serveWisp} from './wisp';
+import {acceptWisp} from './wisp';
 type Env={DB:D1Database,APP_ORIGIN:string,ASSETS:Fetcher};
 export default {async fetch(r:Request,env:Env){
  const u=new URL(r.url);
@@ -8,7 +8,7 @@ export default {async fetch(r:Request,env:Env){
  if(u.pathname==='/wisp/'){
   if(r.headers.get('Upgrade')?.toLowerCase()!=='websocket')return new Response('WebSocket required',{status:426});
   if(r.headers.get('origin')!==u.origin||!await relayAccount(r,env))return new Response('Sign in to Musab X to connect',{status:401});
-  const pair=new WebSocketPair();pair[1].accept();serveWisp(pair[1],address=>connect(address,{secureTransport:'off',allowHalfOpen:false}));
+  const pair=new WebSocketPair();acceptWisp(pair[1],address=>connect(address,{secureTransport:'off',allowHalfOpen:false}));
   return new Response(null,{status:101,webSocket:pair[0]});
  }
  if(u.pathname==='/config.js')return new Response('window.MUSAB_APP_ORIGIN='+JSON.stringify(env.APP_ORIGIN)+';',{headers:{'Content-Type':'application/javascript','Cache-Control':'no-store'}});

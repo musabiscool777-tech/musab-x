@@ -60,3 +60,10 @@ export function serveWisp(ws:WebSocket,connect:(address:{hostname:string,port:nu
  send(3,0,capacity(WINDOW));
  return {shutdown};
 }
+
+export function acceptWisp(ws:WebSocket,connect:(address:{hostname:string,port:number})=>Socket,resolve=resolvePublic){
+ // Workers compatibility dates >= 2026-03-17 default binary frames to Blob.
+ // Select the protocol's ArrayBuffer representation before accepting the socket.
+ ws.binaryType='arraybuffer';ws.accept();
+ return serveWisp(ws,connect,resolve);
+}
