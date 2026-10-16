@@ -18,6 +18,11 @@ try{
  const viewer='https://production-sfo.browserless.io/live/index.html?i=fixture';
  globalThis.fetch=async(url,options)=>{calls++;assert.equal(new URL(url).searchParams.get('token'),token);const data=JSON.parse(options.body);assert.ok(data.query.includes('detached: true'));assert.ok(data.query.includes('interactable: true'));return Response.json({data:{liveURL:{liveURL:viewer,timeout:120000}}})};
  const session=await createLiveBrowser('https://www.google.com/search?q=a%22b',token);assert.equal(session.liveURL,viewer);assert.ok(!JSON.stringify(session).includes(token));
+ let querySeen;globalThis.fetch=async(url,options)=>{querySeen=JSON.parse(options.body).query;assert.equal(new URL(url).searchParams.get('timeout'),'3600000');return Response.json({data:{liveURL:{liveURL:viewer,timeout:3600000}}})};
+ const long=await createLiveBrowser('https://example.com/',token,{quality:'sharp',sessionMinutes:60});assert.ok(long.expiresAt>Date.now()+3590000);assert.ok(querySeen.includes('captureScale: 2'));assert.ok(querySeen.includes('quality: 92'));
+ globalThis.fetch=async(url,options)=>{querySeen=JSON.parse(options.body).query;return Response.json({data:{liveURL:{liveURL:viewer,timeout:120000}}})};
+ const capped=await createLiveBrowser('https://example.com/',token,{quality:'fast',sessionMinutes:60});assert.ok(capped.expiresAt<=Date.now()+120000);assert.ok(querySeen.includes('compressed: false'));assert.ok(querySeen.includes('quality: 60'));
+ const defaultSession=await createLiveBrowser('https://example.com/',token);assert.ok(querySeen.includes('quality: 85'));assert.ok(querySeen.includes('compressed: false'));
  await assert.rejects(()=>createLiveBrowser('https://127.0.0.1/',token));
  await assert.rejects(()=>createLiveBrowser('https://example.com/',''),/BROWSERLESS_TOKEN/);
  for(const bad of ['https://evil.example/live/index.html?i=x','https://production-sfo.browserless.io/live/index.html?token='+token,'https://production-sfo.browserless.io.evil.example/live/index.html']){

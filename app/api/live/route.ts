@@ -12,7 +12,7 @@ export async function POST(r:Request){
   const now=Date.now(),cutoff=now-600000;
   // A durable, atomic limit prevents parallel requests from bypassing the usage cap.
   const result=await db().prepare('INSERT INTO live_browser_usage (account_id,window_start,starts) VALUES (?,?,1) ON CONFLICT(account_id) DO UPDATE SET starts=CASE WHEN window_start<=? THEN 1 ELSE starts+1 END, window_start=CASE WHEN window_start<=? THEN ? ELSE window_start END WHERE window_start<=? OR starts<6').bind(a.id,now,cutoff,cutoff,now,cutoff).run();
-  if(!result.meta.changes)return json({error:'Live browser start limit reached. Use the address bar inside the live browser, or try again in 10 minutes.'},429);
-  return json(await createLiveBrowser(target,env.BROWSERLESS_TOKEN));
+  if(!result.meta.changes)return json({error:'Live browser start limit reached. Search within the displayed website, or try again in 10 minutes.'},429);
+  return json(await createLiveBrowser(target,env.BROWSERLESS_TOKEN,{quality:['fast','balanced','sharp'].includes(b.quality)?b.quality:'balanced',sessionMinutes:[2,15,30,60,120].includes(b.sessionMinutes)?b.sessionMinutes:60}));
  }catch(e){return json({error:e instanceof LiveError?e.message:'The live browser could not start. Check that the latest database migration has deployed.'},e instanceof LiveError?e.status:502)}
 }

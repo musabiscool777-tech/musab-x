@@ -9,6 +9,8 @@ declare namespace Cloudflare {
     OWNER_EMAIL?: string;
     SERPAPI_KEY?: string;
     BROWSERLESS_TOKEN?: string;
+    SUPABASE_URL?: string;
+    SUPABASE_ANON_KEY?: string;
     BUCKET?: R2Bucket;
   }
 }
