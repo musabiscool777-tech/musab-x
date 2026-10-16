@@ -4,6 +4,8 @@ minimumReleaseAgeIgnoreMissingTime: false
 trustLockfile: false
 strictDepBuilds: true
 allowBuilds:
+  # Scramjet ships its JS/WASM; its preinstall only checks the package manager.
+  "@mercuryworkshop/scramjet@1.1.0": false
   esbuild: true
   fsevents: true
   sharp: true
