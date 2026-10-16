@@ -21,7 +21,7 @@ try{
  const profile=email=>{if(!profiles.has(email))profiles.set(email,{id:crypto.randomUUID(),email,email_confirmed_at:'2026-01-01T00:00:00Z'});return profiles.get(email)};
  let current;
  globalThis.fetch=async(raw,opts)=>{
-  calls++;const u=new URL(raw);assert.equal(u.origin,env.SUPABASE_URL);assert.equal(opts.headers.apikey,env.SUPABASE_ANON_KEY);const b=opts.body?JSON.parse(opts.body):{};
+  calls++;assert.equal(opts.redirect,'manual');const u=new URL(raw);assert.equal(u.origin,env.SUPABASE_URL);assert.equal(opts.headers.apikey,env.SUPABASE_ANON_KEY);const b=opts.body?JSON.parse(opts.body):{};
   if(u.pathname.endsWith('/otp')){codes.add(b.email);return Response.json({})}
   if(u.pathname.endsWith('/signup'))return Response.json({user:profile(b.email)});
   if(u.pathname.endsWith('/verify')){if(!codes.delete(b.email)||b.token!=='123456')return Response.json({error:'invalid fixture-code'},{status:400});current=profile(b.email);return Response.json({access_token:'private-provider-access-token',refresh_token:'private-refresh-token'})}
@@ -61,11 +61,15 @@ try{
  // Diagnose without sending mail or exposing provider credentials.
  const beforeDiagnostics=calls;
  const configured={...env,SUPABASE_URL:'  '+env.SUPABASE_URL+'  ',SUPABASE_ANON_KEY:'  fixture-key\n'};
- globalThis.fetch=async(raw,opts)=>{assert.equal(String(raw),env.SUPABASE_URL+'/auth/v1/settings');assert.equal(opts.method,'GET');assert.equal(opts.headers.apikey,'fixture-key');assert.equal(opts.body,undefined);return Response.json({external:{email:true},mailer_autoconfirm:false})};
+ globalThis.fetch=async(raw,opts)=>{assert.equal(String(raw),env.SUPABASE_URL+'/auth/v1/settings');assert.equal(opts.method,'GET');assert.equal(opts.redirect,'manual');assert.equal(opts.headers.apikey,'fixture-key');assert.equal(opts.body,undefined);return Response.json({external:{email:true},mailer_autoconfirm:false})};
  assert.equal((await checkEmailConnection(configured)).ok,true);assert.equal(calls,beforeDiagnostics);
  assert.equal((await checkEmailConnection({...env,SUPABASE_URL:'not a URL'})).code,'invalid_project_url');
  assert.equal((await checkEmailConnection({...env,SUPABASE_ANON_KEY:'fixture key'})).code,'invalid_api_key_format');
  assert.equal((await checkEmailConnection({...env,SUPABASE_ANON_KEY:'sb_secret_private'})).code,'wrong_api_key_type');
+ let redirectCalls=0;globalThis.fetch=async()=>{redirectCalls++;return new Response(null,{status:302,headers:{Location:'https://untrusted.example/'}})};
+ assert.equal((await checkEmailConnection(env)).code,'supabase_redirect_failed');
+ // Diagnostic probes may repeat only the configured Supabase URL; never the redirect.
+ assert.equal(redirectCalls,3);
  globalThis.fetch=async()=>Response.json({message:'Invalid API key: do-not-expose'},{status:401});
  const rejected=await checkEmailConnection(env);assert.equal(rejected.code,'supabase_key_rejected');assert.ok(!JSON.stringify(rejected).includes('do-not-expose'));
  globalThis.fetch=async()=>{throw new TypeError('DNS resolution failed with private-provider-token')};

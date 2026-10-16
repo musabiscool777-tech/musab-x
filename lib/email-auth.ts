@@ -27,7 +27,8 @@ function connectionError(error:unknown){
 }
 async function provider(env:EmailAuthEnv,path:string,body?:unknown,accessToken?:string,method='POST'){
  const {base,key}=configuration(env);let response:Response;
- try{response=await fetch(base+path,{method,redirect:'error',headers:{apikey:key,'Content-Type':'application/json',...(accessToken?{Authorization:'Bearer '+accessToken}:{})},...(body===undefined?{}:{body:JSON.stringify(body)}),signal:AbortSignal.timeout(15000)})}catch(error){throw connectionError(error)}
+ try{response=await fetch(base+path,{method,redirect:'manual',headers:{apikey:key,'Content-Type':'application/json',...(accessToken?{Authorization:'Bearer '+accessToken}:{})},...(body===undefined?{}:{body:JSON.stringify(body)}),signal:AbortSignal.timeout(15000)})}catch(error){throw connectionError(error)}
+ if(response.status>=300&&response.status<400){await response.body?.cancel();throw new EmailError('Supabase redirected the authentication request. Verify the project URL.',503,'supabase_redirect_failed')}
  let data:any;try{data=await response.json()}catch{throw new EmailError('Supabase returned an invalid response. Check its project status.',502,'supabase_invalid_response')}
  if(!response.ok){
   if(response.status===429)throw new EmailError('Too many attempts. Wait a few minutes and try again.',429,'email_rate_limited');
