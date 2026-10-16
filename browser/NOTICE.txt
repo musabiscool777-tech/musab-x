@@ -1,0 +1,18 @@
+Musab X browser source: https://github.com/musabiscool777-tech/musab-x
+
+This browser includes unmodified open-source software from Mercury Workshop:
+Scramjet 1.1.0, AGPL-3.0 (upstream LICENSE): https://github.com/MercuryWorkshop/scramjet/tree/v1.1.0
+Bare Mux 2.1.9, MIT: https://github.com/MercuryWorkshop/bare-mux
+Epoxy Transport 2.1.28, AGPL-3.0-only: https://github.com/MercuryWorkshop/epoxy-transport
+Epoxy TLS, AGPL-3.0-only: https://github.com/MercuryWorkshop/epoxy-tls
+
+Corresponding source is available from those projects and their npm source
+packages at the exact versions pinned in pnpm-lock.yaml in the Musab X source.
+Full license texts: /licenses/AGPL-3.0.txt and /licenses/bare-mux-MIT.txt
+Original copyright and license notices in the distributed bundles are retained.
+AGPL-3.0: https://www.gnu.org/licenses/agpl-3.0.txt
+LGPL-3.0: https://www.gnu.org/licenses/lgpl-3.0.txt
+MIT: https://opensource.org/license/mit
+
+Musab X browser integration files in this directory are provided under AGPL-3.0.
+Copyright 2026 Musab X contributors.

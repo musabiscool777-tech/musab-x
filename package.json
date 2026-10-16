@@ -12,14 +12,17 @@
     "start": "node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js dev --config dist/server/wrangler.json --local --persist-to .wrangler/state --ip 127.0.0.1 --inspector-port 0",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate",
-    "build:independent": "vite build --config vite.independent.config.ts",
+    "build:independent": "vite build --config vite.independent.config.ts && node scripts/build-browser.mjs",
     "dev:independent": "vite --config vite.independent.config.ts",
     "deploy:independent": "wrangler deploy --config dist/server/wrangler.json",
-    "test": "node tests/search.test.mjs && node tests/auth.test.mjs && node tests/pages.test.mjs && node tests/live.test.mjs && node tests/email.test.mjs"
+    "test": "node tests/search.test.mjs && node tests/auth.test.mjs && node tests/pages.test.mjs && node tests/live.test.mjs && node tests/email.test.mjs && node tests/browser.test.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
     "@hookform/resolvers": "^5.7.1",
+    "@mercuryworkshop/bare-mux": "2.1.9",
+    "@mercuryworkshop/epoxy-transport": "2.1.28",
+    "@mercuryworkshop/scramjet": "1.1.0",
     "@shadcn/react": "^0.3.0",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",

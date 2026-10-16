@@ -5,12 +5,18 @@ export async function deployIndependent(sourceEnv=process.env,spawnCommand=spawn
  const secret=sourceEnv.MUSAB_GITHUB_CLIENT_SECRET;
  if(!secret)throw new Error('Set MUSAB_GITHUB_CLIENT_SECRET in the encrypted build secrets before deploying.');
  const env={...sourceEnv};delete env.MUSAB_GITHUB_CLIENT_SECRET;
- const run=(args,input)=>new Promise((resolve,reject)=>{
-  const child=spawnCommand(process.execPath,['node_modules/wrangler/bin/wrangler.js',...args],{env,stdio:[input===undefined?'ignore':'pipe','inherit','inherit']});
+ const run=(args,input,commandEnv=env)=>new Promise((resolve,reject)=>{
+  const child=spawnCommand(process.execPath,['node_modules/wrangler/bin/wrangler.js',...args],{env:commandEnv,stdio:[input===undefined?'ignore':'pipe','inherit','inherit']});
   child.once('error',()=>reject(new Error('Unable to start the deployment command.')));
   child.once('close',code=>resolve(code??1));
   if(input!==undefined){child.stdin.on('error',()=>{});child.stdin.end(input)}
  });
+ // Publish the isolated website renderer before the workspace points to it.
+ // Cloudflare Builds supplies selectors for the primary Worker. Use the
+ // secondary config's explicit name for this separate, authorized deployment.
+ const browserEnv={...env};delete browserEnv.WRANGLER_CI_OVERRIDE_NAME;delete browserEnv.WRANGLER_CI_MATCH_TAG;
+ const browser=await run(['deploy','--config','wrangler.browser.json'],undefined,browserEnv);
+ if(browser!==0)return browser;
  // Deploy first so the Worker exists, including on its initial publication.
  const deployed=await run(['deploy','--config','dist/server/wrangler.json']);
  if(deployed!==0)return deployed;

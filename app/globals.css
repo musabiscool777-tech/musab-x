@@ -25,3 +25,5 @@
 .emailAuth{width:100%;max-width:540px;text-align:left;border-top:1px solid var(--line);padding-top:24px;margin-top:26px}.emailAuth h3{font-size:20px;margin:0 0 14px}.emailAuth p{font-size:13px;line-height:1.7;color:var(--muted)}.emailForm{display:flex;flex-direction:column;gap:18px;margin:20px 0}.emailForm label{display:flex;flex-direction:column;gap:8px;font-size:13px}.emailForm input{width:100%;background:var(--input);border:1px solid var(--line);border-radius:7px;padding:12px;color:var(--fg)}.emailForm small{color:var(--muted)}.emailLinks{display:flex;gap:16px;flex-wrap:wrap}.emailLinks .textButton{font-size:12px;text-decoration:underline}.emailError{color:#d97070!important}
 
 .liveDuration{font-size:11px;padding:0 6px;white-space:nowrap}
+
+.nativeLoading{position:absolute;top:0;left:0;right:0;z-index:2;background:#eff6ff;color:#334155;padding:6px 16px;font-size:12px;pointer-events:none}.liveStatus{z-index:3}.liveWebsite>div>.originalWebsite{position:absolute;inset:0;width:100%;height:100%;border:0}.liveHelp a{display:block;margin-bottom:12px;color:inherit}

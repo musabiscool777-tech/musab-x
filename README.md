@@ -14,21 +14,22 @@ Start with [CLOUDFLARE_SETUP.md](CLOUDFLARE_SETUP.md). It covers repository impo
 
 ## Features
 
-- Live view only: original websites fill the area beneath the address bar, preserving their own layout, images, video, and scripts.
-- Google and visited websites run in an interactive Browserless remote browser. The browsing UI does not use the search-result API or public-page reader. Set the Worker runtime secret `BROWSERLESS_TOKEN` to enable it.
-- Website-only fullscreen: the live website container expands; the Musab X sidebar and address bar are outside fullscreen. Escape or Exit fullscreen returns to the workspace.
-- GitHub sign-in, secure cookie sessions, per-account D1 storage, owner/member roles, and member controls.
-- Guest bookmarks, history, notes, settings, and JSON export/import. Starting a remote browser requires Musab X sign-in to protect the service token and account quota.
+- Live view only: complete original website pages appear beneath the address bar using Scramjet 1.1.0 and Epoxy 2.1.28. Google searches open the Google website; the result API and reader are not used by the browser.
+- Pages render as native HTML, images and JavaScript instead of compressed remote-browser video. Scrolling is local. Website compatibility, CAPTCHA and network speed still vary.
+- A separate `musab-x-browser` Worker serves the renderer and authenticated Wisp TCP relay. Rewritten websites never execute on the workspace's authenticated origin.
+- No Browserless subscription, token, minute allowance or two-minute session cap is needed. Cloudflare free-plan request, CPU and connection limits still apply; free hosting is not unlimited.
+- Website-only fullscreen, persistent live workspace tabs, GitHub/email account support, per-account saved data and administrator controls.
+- Browser access requires Musab X sign-in. Guest bookmarks, notes, history and export/import remain available.
 
-## Live browser setup and limits
+## Browser hosting
 
-Add `BROWSERLESS_TOKEN` as an encrypted **Worker runtime secret**, not a public variable or frontend setting. The integration uses `https://production-sfo.browserless.io/chrome/bql` to create a detached, interactive LiveURL, then embeds only that short-lived viewer. No provider API token is sent to the client or written into logs. The service plan must support BrowserQL and interactive LiveURL.
+The existing build and deployment commands now publish two Workers automatically. `scripts/configure-independent.mjs` shares the existing D1 binding and derives `BROWSER_ORIGIN` from the standard `musab-x.<account>.workers.dev` address. For custom domains, set the public build variable `BROWSER_ORIGIN` to the separately hosted browser origin. The build token needs Workers deployment permission for both `musab-x` and `musab-x-browser`, plus D1 Edit. Existing secrets are preserved. See [CLOUDFLARE_SETUP.md](CLOUDFLARE_SETUP.md).
 
-Deployment applies `drizzle/0002_live_browser.sql` automatically through the existing migration command. Sign in to Musab X before starting a session. New sessions request one hour by default, with 2/15/30/60/120-minute choices in Settings. Both the browser launch timeout and viewer timeout use the selected duration. Browserless plan limits still apply; a rejected duration is explained, and a shorter granted lifetime is reflected in the viewer expiry. The service does not offer an unlimited option. Six starts per account per ten minutes remain enforced atomically in D1. Each start consumes Browserless usage. Reload or a new outer address starts a fresh browser; search and click links **within the displayed website** to navigate within the running session. Browserless tabs and its extra address bar are hidden. Switching Musab X tabs reuses the viewer link while it remains valid. Remote website logins are temporary and are not synced as workspace data.
+The workspace issues a one-use, 60-second ticket, exchanged on the browser origin for its own HttpOnly cookie. Tickets are sent through a checked cross-origin message, never in URLs. Browser sessions last eight hours and refresh after six hours without replacing the page. These are account authorizations, not paid browser sessions. Reconnecting does not purchase minutes. The relay checks account status and accepts only public TCP destinations on ports 80/443, with validated DNS pinned to the connected IP. It supports Wisp v1 with bounded per-stream queues and six concurrent TCP streams per connection. UDP is disabled.
 
-Browserless viewer links are bearer credentials: anyone holding one can view/control that session. They stay in browser memory, not bookmarks, exports, or account data. Closed or abandoned sessions are bounded by the selected/provider-enforced lifetime. Longer sessions consume more provider usage. Expired sessions require an explicit restart; there is no automatic spending loop.
+Cloudflare blocks TCP connections to Cloudflare-hosted destination IPs, private networks and loopback. Consequently some websites cannot load through this relay even when Google works. Authentication, DRM, complex sites and browser storage restrictions can also cause compatibility issues. Browsing does not make users anonymous. The isolated browser's website data stays in that browser profile and is not synced as workspace data. Open-source notices and source links are available at the browser origin's `/NOTICE.txt` and [browser/NOTICE.txt](browser/NOTICE.txt).
 
-Google may show consent, CAPTCHA, or other access checks. Site features, video playback, and latency depend on the remote browser and service plan. Missing secrets, login, plan restrictions, and usage limits appear as errors rather than loading a blocked Google iframe. The server search and reader endpoints remain for compatibility but are unused by Live browsing. Browsing does not make users anonymous.
+Legacy `/api/live` remains for compatibility with older clients, with its previous authenticated Browserless limits; the current UI never calls it. Existing `BROWSERLESS_TOKEN` and `SERPAPI_KEY` secrets are unnecessary for the new browser.
 
 ## Moving existing data
 
@@ -40,6 +41,6 @@ The historical Sites configuration remains available for compatibility with the 
 
 Email/password and emailed one-time-code sign-in are implemented using managed Supabase Auth. Enable them using [EMAIL_AUTH_SETUP.md](EMAIL_AUTH_SETUP.md); until configured, the UI explains that email setup is pending and GitHub remains available. Account → Link email verifies both the current workspace session and the email identity, preserving the existing account, data, and admin role. Matching email strings alone never link identities or grant admin access. Password reset uses a verified email code and revokes existing local sessions. Provider credentials and access/refresh tokens are never returned to the client; app sessions use Secure/HttpOnly cookies.
 
-## Browser quality and loading
+## Validation
 
-Settings → Browser image quality offers Fast (JPEG 60, 1×), Balanced (JPEG 85, 1×), and Sharp (JPEG 92, 2×). Fast and Balanced disable extra stream compression for lower processing latency; Sharp compresses the higher-resolution stream to reduce its bandwidth cost. The viewer starts when the navigation response commits, rather than waiting for DOMContentLoaded, and the page preconnects to the Browserless region. These reduce avoidable startup/stream overhead; actual scrolling, frame rate, and website loading still depend on the network and remote service. Quality changes apply to new sessions.
+`npm test` covers account authentication, email linking, origin checks, one-use browser tickets, disabled/expired access, DNS pinning, and Wisp handshake/data/ordering/flow control. `npm run build:independent` builds the workspace and copies locked browser packages into separate static assets. `npx wrangler deploy --dry-run --config wrangler.browser.json` validates the relay bundle.

@@ -85,11 +85,15 @@ Run **Actions → Deploy Musab X → Run workflow** for the first deployment. Su
 
 ## Interactive live browser
 
-In **Workers & Pages → musab-x → Settings → Variables and Secrets**, add an encrypted runtime secret named `BROWSERLESS_TOKEN` using your Browserless API token. Do not use a public variable or commit the token. The code uses the San Francisco Chrome BrowserQL endpoint. Your plan must support BrowserQL and interactive LiveURL.
+The browser now uses Scramjet + Epoxy + a Wisp relay on a separate `musab-x-browser` Worker. No Browserless token or paid browser service is needed. The existing build command prepares both deployments; the existing deploy command applies migration `0004_browser_relay.sql` and publishes the browser Worker before the main workspace.
 
-The standard deployment command applies migration `0002_live_browser.sql`. After the build succeeds, open the Worker URL, sign in to Musab X with GitHub, and search. A remote browser appears beneath the address bar. Search and click links within the displayed website; Browserless tabs and its extra address bar are hidden. Use the outer fullscreen button to expand only the viewer. New sessions request one hour by default; Settings offers 2/15/30/60/120-minute requests. Browserless plan limits still apply, and unsupported durations can be rejected. Expired sessions require an explicit restart. There are six starts per account per ten minutes. Browserless usage charges and plan limits apply.
+The build token must permit Workers deployment for **both** `musab-x` and `musab-x-browser`, plus D1 Edit. If a generated build token is restricted to the original Worker, update its scope in Cloudflare's build settings before retrying. For the standard `musab-x.<account>.workers.dev` URL, the browser address is derived automatically as `musab-x-browser.<account>.workers.dev`. A custom domain requires a public build variable `BROWSER_ORIGIN` set to the separate browser origin.
 
-Existing runtime secrets are preserved by deployment. `SERPAPI_KEY` is only used by the legacy search API; it does not power the live browser.
+Sign in and search normally. The original Google page loads within the workspace, without a streamed browser's tab/address bar. Search, click, scroll, and use the outer back/forward/reload buttons. Live tabs stay mounted when changing workspace sections. Fullscreen expands only the website. Pages use native image/text quality and local scrolling, so stream-quality and paid-session duration controls are removed.
+
+Browser access uses a one-use short-lived ticket and a separate HttpOnly session cookie. The eight-hour account authorization refreshes automatically; there is no two-minute browser timer. Cloudflare's free usage/CPU limits still apply. Outbound TCP to Cloudflare-hosted IPs is blocked by Cloudflare, so some websites will be unavailable. Google may show CAPTCHA or consent. See README for technical limits and browser/NOTICE.txt for licenses and source.
+
+Existing runtime secrets are preserved. `BROWSERLESS_TOKEN` is only used by the older compatibility endpoint and `SERPAPI_KEY` only by the older result API. Neither powers the current live browser.
 
 ## Email sign-in
 
