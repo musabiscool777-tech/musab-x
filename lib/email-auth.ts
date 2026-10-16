@@ -18,6 +18,10 @@ function connectionError(error:unknown){
  if(e?.name==='TimeoutError'||e?.name==='AbortError')return new EmailError('The Supabase connection timed out. Check that the project is running, then retry.',503,'supabase_timeout');
  // Never return raw exception text: it can contain headers, tokens or URLs.
  const detail=String(e?.message||'')+' '+String(e?.cause?.message||'');
+ if(/redirect/i.test(detail))return new EmailError('The Supabase request could not follow its redirect. Check the project URL.',503,'supabase_redirect_failed');
+ if(/header|bytestring/i.test(detail))return new EmailError('The Supabase API key could not be sent as an HTTP header. Recopy only the publishable/anon key.',503,'supabase_header_failed');
+ if(/tls|ssl|certificate/i.test(detail))return new EmailError('The secure connection to Supabase failed. Check the project status.',503,'supabase_tls_failed');
+ if(/connection.*lost|connection.*reset|ECONNRESET|socket/i.test(detail))return new EmailError('The connection to Supabase was interrupted. Retry after checking project status.',503,'supabase_connection_reset');
  if(/dns|resolve|name.*not.*found|ENOTFOUND/i.test(detail))return new EmailError('The Supabase project address could not be resolved. Recopy SUPABASE_URL from the project Home page.',503,'supabase_dns_failed');
  return new EmailError('Musab X could not connect to Supabase. Check the project URL and project status.',503,'supabase_connection_failed');
 }
@@ -47,7 +51,19 @@ export async function checkEmailConnection(env:EmailAuthEnv){
   if(settings?.external?.email===false)throw new EmailError('Enable Email under Supabase Authentication → Sign In / Providers.',503,'email_provider_disabled');
   if(settings?.mailer_autoconfirm===true||settings?.autoconfirm===true)throw new EmailError('Enable Confirm email in Supabase before creating Musab X accounts.',503,'email_confirmation_disabled');
   return {ok:true,code:'connected',message:'Supabase connection and API key work. This check does not test SMTP delivery.',project};
- }catch(error){const e=error instanceof EmailError?error:connectionError(error);return {ok:false,code:e.code,message:e.message,...(project?{project}:{})}}
+ }catch(error){
+  const e=error instanceof EmailError?error:connectionError(error);
+  let transport:Record<string,unknown>|undefined;
+  if(project&&['supabase_connection_failed','supabase_redirect_failed','supabase_header_failed','supabase_tls_failed','supabase_connection_reset'].includes(e.code)){
+   const {base,key}=configuration(env);transport={keyType:key.startsWith('sb_publishable_')?'publishable':key.startsWith('eyJ')?'legacy-jwt':'unrecognized'};
+   // Compare two fixed read-only requests. Return only status/error categories.
+   for(const withKey of [false,true]){
+    try{const probe=new Request(base+'/settings',{headers:withKey?{apikey:key}:{},redirect:'manual',signal:AbortSignal.timeout(5000)});const response=await fetch(probe);transport[withKey?'withKey':'withoutKey']=response.status;await response.body?.cancel()}
+    catch(probeError){transport[withKey?'withKey':'withoutKey']=connectionError(probeError).code}
+   }
+  }
+  return {ok:false,code:e.code,message:e.message,...(project?{project}:{}),...(transport?{transport}:{})};
+ }
 }
 async function limit(env:EmailAuthEnv,bucket:string,max:number){
  const now=Date.now(),cutoff=now-600000;
