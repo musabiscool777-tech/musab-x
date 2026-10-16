@@ -1,20 +1,53 @@
 import {cookieValue,digest,githubAccount,randomToken,type AuthEnv} from './github-auth';
 export type EmailAuthEnv=AuthEnv & {SUPABASE_URL?:string;SUPABASE_ANON_KEY?:string};
-class EmailError extends Error{constructor(message:string,public status=400){super(message)}}
+class EmailError extends Error{constructor(message:string,public status=400,public code='email_signin_failed'){super(message)}}
 const genericCode='If this address can receive account emails, a code is on its way. Check your inbox and spam folder.';
 function json(value:unknown,status=200){return Response.json(value,{status,headers:{'Cache-Control':'no-store','Referrer-Policy':'no-referrer','X-Content-Type-Options':'nosniff'}})}
-export function emailConfigured(env:EmailAuthEnv){return !!env.SUPABASE_URL&&!!env.SUPABASE_ANON_KEY}
+export function emailConfigured(env:EmailAuthEnv){return !!env.SUPABASE_URL?.trim()&&!!env.SUPABASE_ANON_KEY?.trim()}
 function configuration(env:EmailAuthEnv){
- if(!emailConfigured(env))throw new EmailError('Email sign-in is not configured yet. The owner must connect the email authentication service.',503);
- const url=new URL(env.SUPABASE_URL!);if(url.protocol!=='https:'||url.pathname!=='/'||url.search||url.hash||url.username||url.password||!/^[-a-z0-9]+\.supabase\.co$/.test(url.hostname))throw new EmailError('Email authentication configuration is invalid.',503);
- return url.origin+'/auth/v1';
+ if(!emailConfigured(env))throw new EmailError('Email sign-in is not configured. Add SUPABASE_URL and SUPABASE_ANON_KEY to the musab-x Worker.',503,'email_not_configured');
+ let url:URL;try{url=new URL(env.SUPABASE_URL!.trim())}catch{throw new EmailError('SUPABASE_URL is invalid. Copy the HTTPS project URL from Supabase, not its dashboard link.',503,'invalid_project_url')}
+ if(url.protocol!=='https:'||url.pathname!=='/'||url.search||url.hash||url.username||url.password||!/^[-a-z0-9]+\.supabase\.co$/.test(url.hostname))throw new EmailError('SUPABASE_URL is invalid. Copy the HTTPS project URL from Supabase, not its dashboard link.',503,'invalid_project_url');
+ const key=env.SUPABASE_ANON_KEY!.trim();
+ if(!/^[\x21-\x7e]+$/.test(key))throw new EmailError('SUPABASE_ANON_KEY contains spaces or invalid characters. Copy only the Supabase publishable/anon key.',503,'invalid_api_key_format');
+ if(key.startsWith('sb_secret_'))throw new EmailError('Use the Supabase publishable/anon key, not a secret admin key.',503,'wrong_api_key_type');
+ return {base:url.origin+'/auth/v1',key};
+}
+function connectionError(error:unknown){
+ const e=error as {name?:string,message?:string,cause?:{message?:string}};
+ if(e?.name==='TimeoutError'||e?.name==='AbortError')return new EmailError('The Supabase connection timed out. Check that the project is running, then retry.',503,'supabase_timeout');
+ // Never return raw exception text: it can contain headers, tokens or URLs.
+ const detail=String(e?.message||'')+' '+String(e?.cause?.message||'');
+ if(/dns|resolve|name.*not.*found|ENOTFOUND/i.test(detail))return new EmailError('The Supabase project address could not be resolved. Recopy SUPABASE_URL from the project Home page.',503,'supabase_dns_failed');
+ return new EmailError('Musab X could not connect to Supabase. Check the project URL and project status.',503,'supabase_connection_failed');
 }
 async function provider(env:EmailAuthEnv,path:string,body?:unknown,accessToken?:string,method='POST'){
- let response:Response;
- try{response=await fetch(configuration(env)+path,{method,headers:{apikey:env.SUPABASE_ANON_KEY!,'Content-Type':'application/json',...(accessToken?{Authorization:'Bearer '+accessToken}:{})},...(body===undefined?{}:{body:JSON.stringify(body)}),signal:AbortSignal.timeout(15000)})}catch(error){if(error instanceof EmailError)throw error;throw new EmailError('The email sign-in service is unavailable. Try again shortly.',503)}
- let data:any;try{data=await response.json()}catch{throw new EmailError('The email sign-in service returned an invalid response.',502)}
- if(!response.ok)throw new EmailError(response.status===429?'Too many attempts. Wait a few minutes and try again.':'Sign-in could not be completed. Check your details, verify your email, or request a new code.',response.status===429?429:400);
+ const {base,key}=configuration(env);let response:Response;
+ try{response=await fetch(base+path,{method,redirect:'error',headers:{apikey:key,'Content-Type':'application/json',...(accessToken?{Authorization:'Bearer '+accessToken}:{})},...(body===undefined?{}:{body:JSON.stringify(body)}),signal:AbortSignal.timeout(15000)})}catch(error){throw connectionError(error)}
+ let data:any;try{data=await response.json()}catch{throw new EmailError('Supabase returned an invalid response. Check its project status.',502,'supabase_invalid_response')}
+ if(!response.ok){
+  if(response.status===429)throw new EmailError('Too many attempts. Wait a few minutes and try again.',429,'email_rate_limited');
+  if((path==='/settings'&&[401,403].includes(response.status))||/invalid api key|no api key/i.test(String(data?.message||'')))throw new EmailError('Supabase rejected the API key. Recopy the publishable/anon key from the same project as SUPABASE_URL.',503,'supabase_key_rejected');
+  if(data?.code==='email_address_not_authorized')throw new EmailError('Supabase is still using its restricted test email sender. Enable and save your custom SMTP settings.',503,'smtp_not_configured');
+  if(data?.code==='email_provider_disabled')throw new EmailError('Enable Email under Supabase Authentication → Sign In / Providers.',503,'email_provider_disabled');
+  if(response.status>=500){
+   const mail=['/otp','/signup'].includes(path)&&/email|smtp|mail/i.test(String(data?.msg||data?.message||''));
+   throw new EmailError(mail?'Supabase could not send the email. Check its Auth logs and the Brevo SMTP login, SMTP key, and verified sender.':'Supabase authentication returned a server error. Check the project Auth logs.',502,mail?'smtp_send_failed':'supabase_server_error');
+  }
+  throw new EmailError('Sign-in could not be completed. Check your details, verify your email, or request a new code.');
+ }
  return data;
+}
+export async function checkEmailConnection(env:EmailAuthEnv){
+ let project:string|undefined;
+ try{
+  const {base}=configuration(env);project=new URL(base).origin;
+  // Read-only public provider settings. This never sends an email or signs in.
+  const settings=await provider(env,'/settings',undefined,undefined,'GET');
+  if(settings?.external?.email===false)throw new EmailError('Enable Email under Supabase Authentication → Sign In / Providers.',503,'email_provider_disabled');
+  if(settings?.mailer_autoconfirm===true||settings?.autoconfirm===true)throw new EmailError('Enable Confirm email in Supabase before creating Musab X accounts.',503,'email_confirmation_disabled');
+  return {ok:true,code:'connected',message:'Supabase connection and API key work. This check does not test SMTP delivery.',project};
+ }catch(error){const e=error instanceof EmailError?error:connectionError(error);return {ok:false,code:e.code,message:e.message,...(project?{project}:{})}}
 }
 async function limit(env:EmailAuthEnv,bucket:string,max:number){
  const now=Date.now(),cutoff=now-600000;
@@ -70,5 +103,5 @@ export async function handleEmailAuth(request:Request,env:EmailAuthEnv):Promise<
   if(old)queries.push(env.DB.prepare('DELETE FROM sessions WHERE token_hash=?').bind(await digest(old)));
   await env.DB.batch(queries);
   const response=json({ok:true,linked:linking});response.headers.append('Set-Cookie',`__Host-musab_session=${token}; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=${duration}`);return response;
- }catch(error){return json({error:error instanceof EmailError?error.message:'Email sign-in could not be completed. Check the authentication setup and database migration.'},error instanceof EmailError?error.status:503)}
+ }catch(error){return json({...(error instanceof EmailError?{code:error.code}:{}),error:error instanceof EmailError?error.message:'Email sign-in could not be completed. Check the authentication setup and database migration.'},error instanceof EmailError?error.status:503)}
 }

@@ -13,7 +13,7 @@ const mf=new Miniflare({modules:true,script:'export default {fetch(){return new 
 try{
  writeFileSync(join(dir,'github-auth.mjs'),compile(readFileSync('lib/github-auth.ts','utf8')));
  writeFileSync(join(dir,'email-auth.mjs'),compile(readFileSync('lib/email-auth.ts','utf8').replace("'./github-auth'","'./github-auth.mjs'")));
- const {handleEmailAuth}=await import(pathToFileURL(join(dir,'email-auth.mjs')));
+ const {handleEmailAuth,checkEmailConnection}=await import(pathToFileURL(join(dir,'email-auth.mjs')));
  const {digest,githubAccount}=await import(pathToFileURL(join(dir,'github-auth.mjs')));
  const DB=await mf.getD1Database('DB');for(const name of ['0000_pink_tomorrow_man.sql','0001_independent_auth.sql','0003_email_auth.sql'])await DB.exec(readFileSync('drizzle/'+name,'utf8').replaceAll('\n',' '));
  const env={DB,APP_ORIGIN:'https://musab.example',SUPABASE_URL:'https://fixture.supabase.co',SUPABASE_ANON_KEY:'fixture-key'};
@@ -58,5 +58,22 @@ try{
  await run({email:'reset@example.com',action:'send-code'});const reset=await run({email:'reset@example.com',action:'verify-code',code:'123456',newPassword:'new-fixture-password'});assert.equal(reset.status,200);
  await run({email:'linked@example.com',action:'send-code'});const resetOwner=await run({email:'linked@example.com',action:'verify-code',code:'123456',newPassword:'new-fixture-password'});assert.equal(resetOwner.status,200);await assert.rejects(()=>githubAccount(new Request(env.APP_ORIGIN,{headers:{cookie:cookie(ownerAgain)}}),env));assert.equal((await githubAccount(new Request(env.APP_ORIGIN,{headers:{cookie:cookie(resetOwner)}}),env)).id,'github:1');
  const responses=await Promise.all(Array.from({length:12},()=>run({email:'limited@example.com',action:'send-code'})));assert.equal(responses.filter(r=>r.status===429).length,2);
+ // Diagnose without sending mail or exposing provider credentials.
+ const beforeDiagnostics=calls;
+ const configured={...env,SUPABASE_URL:'  '+env.SUPABASE_URL+'  ',SUPABASE_ANON_KEY:'  fixture-key\n'};
+ globalThis.fetch=async(raw,opts)=>{assert.equal(String(raw),env.SUPABASE_URL+'/auth/v1/settings');assert.equal(opts.method,'GET');assert.equal(opts.headers.apikey,'fixture-key');assert.equal(opts.body,undefined);return Response.json({external:{email:true},mailer_autoconfirm:false})};
+ assert.equal((await checkEmailConnection(configured)).ok,true);assert.equal(calls,beforeDiagnostics);
+ assert.equal((await checkEmailConnection({...env,SUPABASE_URL:'not a URL'})).code,'invalid_project_url');
+ assert.equal((await checkEmailConnection({...env,SUPABASE_ANON_KEY:'fixture key'})).code,'invalid_api_key_format');
+ assert.equal((await checkEmailConnection({...env,SUPABASE_ANON_KEY:'sb_secret_private'})).code,'wrong_api_key_type');
+ globalThis.fetch=async()=>Response.json({message:'Invalid API key: do-not-expose'},{status:401});
+ const rejected=await checkEmailConnection(env);assert.equal(rejected.code,'supabase_key_rejected');assert.ok(!JSON.stringify(rejected).includes('do-not-expose'));
+ globalThis.fetch=async()=>{throw new TypeError('DNS resolution failed with private-provider-token')};
+ const dnsFailure=await checkEmailConnection(env);assert.equal(dnsFailure.code,'supabase_dns_failed');assert.ok(!JSON.stringify(dnsFailure).includes('private-provider-token'));
+ globalThis.fetch=async()=>{throw new DOMException('private timeout detail','TimeoutError')};assert.equal((await checkEmailConnection(env)).code,'supabase_timeout');
+ globalThis.fetch=async()=>Response.json({external:{email:false}});assert.equal((await checkEmailConnection(env)).code,'email_provider_disabled');
+ globalThis.fetch=async()=>Response.json({mailer_autoconfirm:true});assert.equal((await checkEmailConnection(env)).code,'email_confirmation_disabled');
+ globalThis.fetch=async()=>Response.json({code:'unexpected_failure',msg:'Error sending confirmation email: private SMTP password'},{status:500});
+ const mailFailure=await handleEmailAuth(req({email:'diagnostic-test@example.com',action:'send-code'},{'cf-connecting-ip':'198.51.100.2'}),env);const mailBody=await mailFailure.json();assert.equal(mailBody.code,'smtp_send_failed');assert.ok(!JSON.stringify(mailBody).includes('private SMTP password'));
  console.log('Email auth tests passed: provider verification, signup confirmation, password/code sign-in, reset, CSRF, code replay, secure cookies, disabled users, atomic limits, explicit linking, owner isolation and preserved workspace data.');
 }finally{globalThis.fetch=originalFetch;await mf.dispose();rmSync(dir,{recursive:true,force:true})}
