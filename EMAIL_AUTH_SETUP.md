@@ -20,10 +20,10 @@ The app expects a 6–8 digit code, not a magic-link redirect. Signup confirmati
 
 | Name | Type | Value |
 | --- | --- | --- |
-| SUPABASE_URL | Variable | `https://YOUR_PROJECT_REF.supabase.co` |
+| SUPABASE_URL | Secret | `https://YOUR_PROJECT_REF.supabase.co` |
 | SUPABASE_ANON_KEY | Secret | Project anon/publishable API key |
 
-Save/deploy the settings. These are runtime settings, not frontend environment variables. Never paste passwords or secret keys into chat.
+Save/deploy the settings. Use Secret for both values so future Wrangler deployments preserve them. These are runtime settings, not frontend environment variables. Never paste passwords or secret keys into chat.
 
 7. Deploy the latest GitHub code. The normal deploy command applies migration `0003_email_auth.sql`.
 8. To keep the existing owner workspace, sign in with GitHub first and use **Account → Link email sign-in**. Verify the email by password or emailed code. This links the verified email identity to the current workspace without copying or changing its data or role. Then sign out and test both email/password and Email code.
