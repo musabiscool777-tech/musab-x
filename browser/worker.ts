@@ -1,9 +1,11 @@
 import {connect} from 'cloudflare:sockets';
 import {exchangeTicket,relayAccount} from './auth';
 import {acceptWisp} from './wisp';
+import {relayHttp} from './http';
 type Env={DB:D1Database,APP_ORIGIN:string,ASSETS:Fetcher};
 export default {async fetch(r:Request,env:Env){
  const u=new URL(r.url);
+ if(u.pathname==='/http')return relayHttp(r,async request=>Boolean(await relayAccount(request,env)));
  if(u.pathname==='/session')return exchangeTicket(r,env);
  if(u.pathname==='/wisp/'){
   if(r.headers.get('Upgrade')?.toLowerCase()!=='websocket')return new Response('WebSocket required',{status:426});

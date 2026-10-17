@@ -3,12 +3,12 @@ const APP=window.MUSAB_APP_ORIGIN,box=document.getElementById('message');
 let frame,connection,starting=false,authenticated=false;
 function send(type,extra={}){parent.postMessage({type,...extra},APP)}
 function status(message){box.textContent=message;box.hidden=false}
-function fail(error){starting=false;status(error?.message||'Browser could not connect. Try reloading.');send('musab:error',{error:box.textContent})}
+function fail(error){starting=false;status(error?.message||'Browser could not connect. Try reloading.');send('musab:error',{error:box.textContent,details:error?.details||''})}
 function validUrl(raw){const u=new URL(raw);if(!['https:','http:'].includes(u.protocol)||u.username||u.password)throw new Error('Enter a public website address.');return u.href}
 async function ensureTransport(){
  const setup=async()=>{
   // All workspace tabs share this BareMux worker. Reuse its transport.
-  if(await connection.getTransport()!=='/transport.mjs?v=20261017')await connection.setTransport('/transport.mjs?v=20261017',[{wisp:location.origin.replace(/^http/,'ws')+'/wisp/',wisp_v2:false,udp_extension_required:false}]);
+  if(await connection.getTransport()!=='/transport.mjs?v=20261017b')await connection.setTransport('/transport.mjs?v=20261017b',[{wisp:location.origin.replace(/^http/,'ws')+'/wisp/',wisp_v2:false,udp_extension_required:false}]);
  };
  if(navigator.locks)await navigator.locks.request('musab-browser-transport',setup);else await setup();
 }
@@ -31,7 +31,7 @@ async function initialise(){
   if(frame.frame.src==='about:blank'||doc?.URL==='about:blank')return;
   if(doc?.getElementById('errorTrace')&&doc?.getElementById('errorTitle')){
    frame.frame.hidden=true;
-   fail(new Error('The website connection was interrupted. Try reconnecting. If it keeps happening, the website may be unavailable through this browser.'));return;
+   const error=new Error('The website could not load. Expand Technical details below to see the error.');error.details=String(doc.getElementById('errorTrace').value||'').slice(0,8000);fail(error);return;
   }
   frame.frame.hidden=false;box.hidden=true;document.getElementById('source').hidden=true;send('musab:loaded');
   try{send('musab:url',{url:validUrl(frame.url.href),title:doc.title.slice(0,120)})}catch{}
