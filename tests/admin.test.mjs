@@ -1,0 +1,34 @@
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+import {readFileSync} from 'node:fs';
+import {pathToFileURL} from 'node:url';
+import ts from 'typescript';
+const require=createRequire(import.meta.resolve('wrangler/package.json')),{Miniflare}=await import(pathToFileURL(require.resolve('miniflare')));
+const route=readFileSync('app/api/admin/route.ts','utf8').replace(/^import .*;$/gm,'');
+const fixture=`import {env} from 'cloudflare:workers';
+const db=()=>env.DB;const json=(v,status=200)=>Response.json(v,{status});
+const account=async r=>{const a=await db().prepare('SELECT * FROM accounts WHERE id=?').bind(r.headers.get('x-fixture-actor')||'').first();if(!a||a.disabled)throw new Error('Sign in to continue');return a};
+const checkWrite=r=>{if(r.headers.get('origin')!==new URL(r.url).origin||!r.headers.get('content-type')?.includes('application/json'))throw new Error('Invalid origin')};
+const body=r=>r.json();const isOwnerAccount=a=>a.id==='owner';`;
+const script=ts.transpileModule(fixture+route+`\nexport default {fetch:r=>r.method==='PUT'?PUT(r):GET(r)};`,{compilerOptions:{target:99,module:99}}).outputText;
+const mf=new Miniflare({modules:true,script,d1Databases:['DB'],compatibilityDate:'2026-05-15'});
+try{
+ const DB=await mf.getD1Database('DB');for(const path of ['drizzle/0000_pink_tomorrow_man.sql','drizzle/0005_admin_activity.sql'])await DB.exec(readFileSync(path,'utf8').replaceAll('\n',' '));
+ for(const [id,role] of [['owner','admin'],['admin','admin'],['member','member']])await DB.prepare('INSERT INTO accounts (id,email,name,role,created,data) VALUES (?,?,?,?,?,?)').bind(id,id+'@example.com',id,role,'2026-10-17','{"notes":"private"}').run();
+ const request=(actor,body,origin='https://musab.test')=>mf.dispatchFetch('https://musab.test/api/admin',{method:body?'PUT':'GET',headers:{'x-fixture-actor':actor,'content-type':'application/json',origin},...(body?{body:JSON.stringify(body)}:{})});
+ assert.equal((await request('')).status,401);assert.equal((await request('member')).status,403);
+ assert.equal((await request('member',{id:'admin',role:'member',disabled:false})).status,403);
+ assert.equal((await request('admin',{id:'owner',role:'member',disabled:true})).status,403);
+ assert.equal((await request('admin',{id:'admin',role:'member',disabled:true})).status,400);
+ assert.equal((await request('admin',{id:'missing',role:'member',disabled:false})).status,404);
+ assert.equal((await request('admin',{id:'member',role:'member',disabled:'yes'})).status,400);
+ assert.equal((await request('admin',{id:'member',role:'admin',disabled:false},'https://evil.test')).status,400);
+ let view=await (await request('admin')).json();assert.equal(view.users.find(u=>u.id==='owner').owner,true);assert.ok(!JSON.stringify(view).includes('private'));assert.equal(view.activity.length,0);
+ assert.equal((await request('admin',{id:'member',role:'admin',disabled:true})).status,200);
+ const target=await DB.prepare('SELECT role,disabled FROM accounts WHERE id=?').bind('member').first();assert.deepEqual(target,{role:'admin',disabled:1});
+ view=await (await request('admin')).json();assert.equal(view.activity.length,1);assert.equal(view.activity[0].actor_name,'admin');assert.equal(view.activity[0].old_role,'member');assert.equal(view.activity[0].new_role,'admin');assert.equal(view.activity[0].new_disabled,1);
+ await request('admin',{id:'member',role:'admin',disabled:true});assert.equal((await (await request('admin')).json()).activity.length,1,'No-op does not create an audit event');
+ await DB.exec('DROP TABLE admin_activity');assert.equal((await request('admin',{id:'member',role:'member',disabled:false})).status,400);
+ assert.deepEqual(await DB.prepare('SELECT role,disabled FROM accounts WHERE id=?').bind('member').first(),target,'Failed audit write rolls back access change');
+ console.log('Admin tests passed: authorization, owner/self protection, validation, minimal member data, access updates, audit trail, and atomic rollback.');
+}finally{await mf.dispose()}
