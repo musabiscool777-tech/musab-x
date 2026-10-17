@@ -30,3 +30,23 @@ class SiteFailure extends FixtureTransport {async request(){requests++;throw new
 requests=0;const NoRetry=resilientTransport(SiteFailure,async()=>{});
 await assert.rejects(()=>new NoRetry({}).request(new URL('https://example.com'),'GET',null,{},null),/Website rejected/);assert.equal(requests,1);
 console.log('Transport tests passed: concurrent initialization, shared reconnect, safe-read recovery, bounded retries, cancellation, and no form replay.');
+
+// A destination TLS failure is independent of the shared WebSocket connection.
+let clients=0,tlsCalls=0;
+class DestinationFailure {
+ async init(){clients++;}
+ async request(url){if(url.hostname==='broken.example'){tlsCalls++;throw new Error('Hyper client: WispCloseReason(Unknown, tls handshake eof)')}return {status:200};}
+}
+const Isolated=resilientTransport(DestinationFailure,async()=>{}),isolated=new Isolated({});
+const results=await Promise.allSettled([isolated.request(new URL('https://broken.example'),'GET',null,{}),isolated.request(new URL('https://healthy.example'),'GET',null,{})]);
+assert.equal(results[0].status,'rejected');assert.equal(results[1].value.status,200);assert.equal(clients,1,'TLS retries keep the healthy shared client');assert.equal(tlsCalls,3);
+
+let metadataCalls=0;
+const Metadata=resilientTransport(FixtureTransport,async()=>{},async (path,options)=>{
+ metadataCalls++;assert.equal(path,'/public_suffix_list.dat');assert.equal(options.signal,undefined);return new Response('com\nco.uk\n',{headers:{'Content-Type':'text/plain'}});
+});
+const metadata=new Metadata({});
+const suffix=await metadata.request(new URL('https://publicsuffix.org/list/public_suffix_list.dat'),'GET',null,{});
+assert.equal(await new Response(suffix.body).text(),'com\nco.uk\n');assert.equal(metadataCalls,1);assert.equal(metadata.current,undefined,'Metadata does not require any relay connection');
+const FailedMetadata=resilientTransport(FixtureTransport,async()=>{},async()=>new Response('missing',{status:404}));
+await assert.rejects(()=>new FailedMetadata({}).request(new URL('https://publicsuffix.org/list/public_suffix_list.dat'),'GET',null,{}),/domain list/);

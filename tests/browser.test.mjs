@@ -55,6 +55,15 @@ try{
  ws.message(connectPacket(9,25));assert.equal(ws.sent.at(-1)[5],0x48);
  ws.message(packet(4,1,new Uint8Array([2])));assert.equal(sockets[0].didClose,true);
  ws.message(new Uint8Array([1]));assert.equal(ws.closed,true);service.shutdown();
+ // Search results and their destination can overlap many live resource streams.
+ const busy=new FakeWS();let connected=0,closed=0;
+ const multiplexed=serveWisp(busy,()=>{connected++;return {opened:Promise.resolve(),closed:Promise.resolve(),readable:new ReadableStream(),writable:new WritableStream(),async close(){closed++}}},async()=> '8.8.8.8');
+ for(let id=1;id<=32;id++)busy.message(connectPacket(id));
+ await new Promise(resolve=>setTimeout(resolve,0));assert.equal(connected,32,'Live streams are not capped at six');
+ assert.ok(!busy.sent.some(p=>p[0]===4),'Concurrent page resources remain open');
+ busy.message(connectPacket(33));assert.equal(busy.sent.at(-1)[5],0x49,'The client resource bound still applies');
+ busy.message(packet(4,1));busy.message(connectPacket(34));await new Promise(resolve=>setTimeout(resolve,0));assert.equal(connected,33,'Closing a stream frees capacity');
+ multiplexed.shutdown();assert.equal(closed,33);
  // Exercise real workerd binary-frame delivery at the production compatibility date.
  // A Node/FakeWS-only test misses the runtime's default Blob representation.
  const runtimeSource=compile(readFileSync('lib/web.ts','utf8'))+'\n'+compile(readFileSync('browser/wisp.ts','utf8').replace("import {publicAddress} from '../lib/web';",''))+`

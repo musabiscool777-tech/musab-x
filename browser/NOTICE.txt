@@ -16,3 +16,8 @@ MIT: https://opensource.org/license/mit
 
 Musab X browser integration files in this directory are provided under AGPL-3.0.
 Copyright 2026 Musab X contributors.
+
+Public Suffix List snapshot: https://publicsuffix.org/list/public_suffix_list.dat
+Fetched 2026-10-17; Mozilla Public License 2.0.
+Copyright and source notices are retained in /public_suffix_list.dat.
+License: https://mozilla.org/MPL/2.0/

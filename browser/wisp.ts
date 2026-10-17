@@ -2,7 +2,7 @@
 import {publicAddress} from '../lib/web';
 type Socket={opened:Promise<unknown>,closed:Promise<unknown>,readable:ReadableStream<Uint8Array>,writable:WritableStream<Uint8Array>,close:()=>Promise<void>};
 type Stream={socket?:Socket,writer?:WritableStreamDefaultWriter<Uint8Array>,ready:Promise<void>,tail:Promise<void>,queued:number,bytes:number,closed:boolean,received:number};
-const WINDOW=32,MAX_PACKET=262144,MAX_QUEUE=1048576;
+const WINDOW=32,MAX_PACKET=262144,MAX_QUEUE=1048576,MAX_STREAMS=32;
 export function packet(type:number,id:number,payload:Uint8Array=new Uint8Array()){
  const out=new Uint8Array(5+payload.length);out[0]=type;new DataView(out.buffer).setUint32(1,id,true);out.set(payload,5);return out;
 }
@@ -32,7 +32,9 @@ export function serveWisp(ws:WebSocket,connect:(address:{hostname:string,port:nu
   if(!id){shutdown();return}
   if(type===1){
    if(streams.has(id)){end(id,0x41);return}
-   if(streams.size>=6){send(4,id,new Uint8Array([0x49]));return}
+   // Bound per-client memory without rejecting ordinary pages after six resources.
+   // The runtime queues connection establishment separately from live streams.
+   if(streams.size>=MAX_STREAMS){send(4,id,new Uint8Array([0x49]));return}
    if(data.length<4||data[0]!==1){send(4,id,new Uint8Array([0x41]));return}
    const port=new DataView(data.buffer,data.byteOffset,data.byteLength).getUint16(1,true);
    if(port!==80&&port!==443){send(4,id,new Uint8Array([0x48]));return}

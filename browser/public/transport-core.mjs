@@ -1,5 +1,5 @@
 // One initialized Epoxy client per shared transport. Only safe reads are retried.
-export function resilientTransport(Base, pause = ms => new Promise(resolve => setTimeout(resolve, ms))) {
+export function resilientTransport(Base, pause = ms => new Promise(resolve => setTimeout(resolve, ms)), metadataFetch = (...args) => fetch(...args)) {
   return class ResilientTransport {
     ready = false;
     current;
@@ -22,16 +22,26 @@ export function resilientTransport(Base, pause = ms => new Promise(resolve => se
       await this.init();
     }
     async request(url, method, body, headers, signal) {
+      // Scramjet consults this list before cross-site navigation. Serve the pinned
+      // upstream snapshot locally, so metadata cannot fail with the destination.
+      if (url.href === 'https://publicsuffix.org/list/public_suffix_list.dat' && method.toUpperCase() === 'GET') {
+        const response = await metadataFetch('/public_suffix_list.dat', {signal});
+        if (!response.ok) throw new Error('Browser domain list could not load. Reload the browser.');
+        return {body: response.body, headers: Object.fromEntries(response.headers), status: response.status, statusText: response.statusText};
+      }
       for (let attempt = 0; ; attempt++) {
         if (signal?.aborted) throw signal.reason || new DOMException('Aborted', 'AbortError');
         await this.init();
         const client = this.current;
         try { return await client.request(url, method, body, headers, signal); }
         catch (error) {
-          const disconnected = /MuxTaskEnded|Wisp.*(?:closed|close|ended)|WebSocket.*(?:closed|connection)|connection (?:closed|reset)|tls handshake eof/i.test(String(error));
-          if (!disconnected || !['GET', 'HEAD'].includes(method.toUpperCase()) || attempt >= 2 || signal?.aborted) throw error;
+          const message = String(error);
+          const disconnected = /MuxTaskEnded|WebSocket.*(?:closed|connection)/i.test(message) || (/Wisp server closed/i.test(message) && !/tls handshake eof|WispCloseReason/i.test(message));
+          const interrupted = disconnected || /connection (?:closed|reset)|tls handshake eof/i.test(message);
+          if (!interrupted || !['GET', 'HEAD'].includes(method.toUpperCase()) || attempt >= 2 || signal?.aborted) throw error;
           await pause(200 * (attempt + 1));
-          await this.replace(client);
+          // A failed destination stream must not discard other tabs' active client.
+          if (disconnected) await this.replace(client);
         }
       }
     }
