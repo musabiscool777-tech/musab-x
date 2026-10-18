@@ -7,6 +7,7 @@ import {WorkspaceSettings} from '../components/workspace-settings';
 import {BrowserView} from '../components/browser-view';
 import {EmailSignIn} from '../components/email-sign-in';
 import {workspace} from '../lib/workspace';
+import {parseTabSession,saveTabSession,tabSessionKey} from '../lib/tab-session';
 import {liveSearchUrl} from '../lib/live-search';
 import {ArrowLeft,ArrowRight,RotateCw,Plus,X,Search,Globe,Compass,Bookmark,Clock,Settings,User,Shield,ArrowUpRight,ChevronRight,Star,Trash2,Download,Sun,Moon,StickyNote,Check,LayoutGrid,ExternalLink,LoaderCircle,Menu,Maximize2,Minimize2} from 'lucide-react';
 type Entry={id:string,title:string,url:string,date?:string};type Tab={id:string,title:string,input:string,kind:'home'|'search'|'page',stack:string[],position:number};
@@ -17,8 +18,21 @@ function newTab():Tab{return{id:crypto.randomUUID(),title:'New tab',input:'',kin
 async function api(path:string,opts?:RequestInit){const r=await fetch(path,opts);const d:any=await r.json();if(!r.ok)throw Object.assign(new Error(d.error||'Something went wrong'),{direct:d.direct});return d}
 export default function Home(){
 const[tabs,setTabs]=useState<Tab[]>([{id:'initial',title:'New tab',input:'',kind:'home',stack:[''],position:0}]),[active,setActive]=useState('initial'),[section,setSection]=useState('Explore'),[input,setInput]=useState(''),[account,setAccount]=useState<any>(null),[data,setData]=useState<any>(defaults),[ready,setReady]=useState(false),[toast,setToast]=useState(''),[reloadKeys,setReloadKeys]=useState<Record<string,number>>({}),[frameHelp,setFrameHelp]=useState(false),[browserCommand,setBrowserCommand]=useState<{tab:string,type:'back'|'forward',key:number}>(),[saving,setSaving]=useState(false),[syncError,setSyncError]=useState(''),[menu,setMenu]=useState(false),[tabSearch,setTabSearch]=useState(false),[filter,setFilter]=useState(''),[name,setName]=useState(''),[full,setFull]=useState(false),[auth,setAuth]=useState({email:false,provider:'GitHub',signin:'/auth/signin',signout:'/auth/signout'});
+const [tabsStorageKey,setTabsStorageKey]=useState('');const tabsSnapshot=useRef({tabs,active}),tabsStorageWarning=useRef(false);tabsSnapshot.current={tabs,active};
 const version=useRef(0),latest=useRef<any>(defaults),liveArea=useRef<HTMLDivElement>(null),saveTimer=useRef<any>(null),savingRef=useRef(false),pending=useRef(false),nameRef=useRef(''),mounted=useRef(true);const tab=tabs.find(t=>t.id===active)||tabs[0];
 useEffect(()=>{mounted.current=true;api('/api/auth').then(setAuth).catch(()=>{});api('/api/account').then(a=>{setAccount(a);setName(a.name);nameRef.current=a.name;version.current=a.version;const saved={...defaults,...a.data,settings:{...defaults.settings,...a.data.settings}};latest.current=saved;setData(saved);setReady(true)}).catch(e=>{if(e.message!=='Sign in to continue')setToast(e.message);else{try{const parsed=workspace.safeParse(JSON.parse(localStorage.getItem('musab-x-guest')||'null'));if(parsed.success){const saved=parsed.data;latest.current=saved;setData(saved)}}catch{}}setReady(true)});return()=>{mounted.current=false;clearTimeout(saveTimer.current);}},[]);
+useEffect(()=>{
+ if(!ready)return;
+ const key=tabSessionKey(account?.id);let restored;
+ try{restored=parseTabSession(localStorage.getItem(key))}catch{}
+ if(restored){setTabs(restored.tabs);setActive(restored.active)}else{const initial=newTab();setTabs([initial]);setActive(initial.id)}
+ setTabsStorageKey(key);
+},[ready,account?.id]);
+useEffect(()=>{
+ if(!ready||tabsStorageKey!==tabSessionKey(account?.id))return;
+ const persist=()=>{const snapshot=tabsSnapshot.current;let saved=false;try{saved=saveTabSession(localStorage,tabsStorageKey,snapshot.tabs,snapshot.active)}catch{}if(!saved&&!tabsStorageWarning.current){tabsStorageWarning.current=true;setToast('Your browser could not save open tabs. Allow site storage to restore them next time.')}};
+ persist();window.addEventListener('pagehide',persist);return()=>window.removeEventListener('pagehide',persist);
+},[tabs,active,tabsStorageKey,ready,account?.id]);
 useEffect(()=>{setInput(tab?.input||'')},[active,tab?.input]);useEffect(()=>{if(!toast)return;const t=setTimeout(()=>setToast(''),5000);return()=>clearTimeout(t)},[toast]);
 useEffect(()=>{const key=(e:KeyboardEvent)=>{if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key.toLowerCase()==='a'){e.preventDefault();setTabSearch(v=>!v)}if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();document.getElementById('address')?.focus()}if((e.ctrlKey||e.metaKey)&&e.key==='b'){e.preventDefault();setSection('Bookmarks')}};window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key)},[]);
 async function flush(){if(savingRef.current){pending.current=true;return}if(!account||!ready)return;savingRef.current=true;setSaving(true);pending.current=false;const snapshot=latest.current;try{const d=await api('/api/account',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({version:version.current,data:snapshot,name:nameRef.current})});version.current=d.version;setSyncError('')}catch(e){setSyncError((e as Error).message);setToast((e as Error).message);pending.current=false}finally{savingRef.current=false;setSaving(false);if(pending.current&&mounted.current)void flush()}}
@@ -55,3 +69,4 @@ return <div className={'app '+data.settings.theme+' density-'+data.settings.dens
 {section==='Admin'&&account?.role==='admin'&&<AdminPanel viewerId={account.id}/>}
 </div>{tabSearch&&<TabSwitcher tabs={tabs} active={active} onClose={()=>setTabSearch(false)} onSelect={id=>{setActive(id);setSection('Explore')}}/>}{!ready&&<div className="connecting"><LoaderCircle size={16} className="spin"/>Connecting your workspace…</div>}{toast&&<div role="status" className="toast">{toast}<button className="icon" aria-label="Dismiss notification" onClick={()=>setToast('')}><X size={14}/></button></div>}{syncError&&<div role="alert" className="syncWarning">{syncError} <button onClick={exportData}>Export unsaved data</button><button onClick={()=>location.reload()}>Reload</button></div>}</div></div>
 }
+
