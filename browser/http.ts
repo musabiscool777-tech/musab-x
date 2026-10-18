@@ -1,6 +1,6 @@
 import {validUrl,verify} from '../lib/web';
 
-// Read-only escape hatch when a destination rejects the Wisp/TLS connection.
+// Authenticated HTTP relay for website reads and one-time form/API submissions.
 // Website headers travel as metadata; they never become workspace cookies.
 export async function relayHttp(r:Request,authorize:(r:Request)=>Promise<boolean>,fetcher:typeof fetch=fetch,verifyTarget=verify){
  const outer=new URL(r.url),failure=(message:string,status:number)=>new Response(message,{status,headers:{'Cache-Control':'no-store','Content-Type':'text/plain'}});
@@ -9,12 +9,18 @@ export async function relayHttp(r:Request,authorize:(r:Request)=>Promise<boolean
  let input:any;
  try{
   const reader=r.body?.getReader();if(!reader)throw new Error();let size=0,text='';const decoder=new TextDecoder();
-  try{while(true){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>65536){await reader.cancel();throw new Error()}text+=decoder.decode(value,{stream:true})}}finally{reader.releaseLock()}
+  try{while(true){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>3000000){await reader.cancel();throw new Error()}text+=decoder.decode(value,{stream:true})}}finally{reader.releaseLock()}
   input=JSON.parse(text+decoder.decode());
  }catch{return failure('Invalid browser request',400)}
- let url:URL,headers:Headers;
+ let url:URL,headers:Headers,body:Uint8Array<ArrayBuffer>|null=null;
  try{
-  if(typeof input.url!=='string'||input.url.length>8192||!['GET','HEAD'].includes(input.method)||!input.headers||typeof input.headers!=='object'||Array.isArray(input.headers))throw new Error();
+  if(typeof input.url!=='string'||input.url.length>8192||!['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'].includes(input.method)||!input.headers||typeof input.headers!=='object'||Array.isArray(input.headers))throw new Error();
+  if(new TextEncoder().encode(JSON.stringify(input.headers)).length>65536)throw new Error();
+  if(input.body!=null){
+   if(typeof input.body!=='string'||input.body.length>2796204||(input.body.length%4!==0||/[^A-Za-z0-9+/=]/.test(input.body)))throw new Error();
+   body=Uint8Array.from(atob(input.body),c=>c.charCodeAt(0));if(body.length>2097152)throw new Error();
+  }
+  if(['GET','HEAD'].includes(input.method)&&body?.length)throw new Error();
   url=validUrl(input.url);
   // Prevent recursion through the browser origin.
   if(url.origin===outer.origin)throw new Error();
@@ -29,7 +35,7 @@ export async function relayHttp(r:Request,authorize:(r:Request)=>Promise<boolean
  try{
   const timeout=new AbortController(),timer=setTimeout(()=>timeout.abort(new Error('Website connection timed out')),20000);
   let upstream:Response;
-  try{upstream=await fetcher(url,{method:input.method,headers,redirect:'manual',signal:AbortSignal.any([r.signal,timeout.signal])})}finally{clearTimeout(timer)}
+  try{upstream=await fetcher(url,{method:input.method,headers,body:body?.length?body:null,redirect:'manual',signal:AbortSignal.any([r.signal,timeout.signal])})}finally{clearTimeout(timer)}
   const websiteHeaders:Record<string,string|string[]>={};
   for(const [key,value] of upstream.headers){if(!/^(set-cookie|content-encoding|content-length|transfer-encoding)$/i.test(key))websiteHeaders[key]=value}
   const cookies=upstream.headers.getSetCookie();if(cookies.length)websiteHeaders['set-cookie']=cookies;
