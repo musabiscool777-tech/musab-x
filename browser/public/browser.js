@@ -1,11 +1,6 @@
-import {LocationPermission} from '/location-permission.mjs?v=20261018';
 /* Musab X browser shell. Websites execute only on this separate browser origin. */
 const APP=window.MUSAB_APP_ORIGIN,box=document.getElementById('message');
-let frame,connection,starting=false,authenticated=false,restoringLocation;
-const locationPermission=new LocationPermission({navigator,ui:{panel:document.getElementById('permissions'),message:document.getElementById('permissionMessage'),button:document.getElementById('allowLocation')},onPending:pending=>send('musab:permission',{pending}),onRevoked:()=>{
- if(frame)frame.frame.hidden=true;
- restoringLocation??=locationPermission.require().then(()=>{if(frame)frame.reload()}).finally(()=>{restoringLocation=undefined});
-}});
+let frame,connection,starting=false,authenticated=false;
 function send(type,extra={}){parent.postMessage({type,...extra},APP)}
 function status(message){box.textContent=message;box.hidden=false}
 function fail(error){starting=false;status(error?.message||'Browser could not connect. Try reloading.');send('musab:error',{error:box.textContent,details:error?.details||''})}
@@ -50,10 +45,10 @@ window.addEventListener('message',async event=>{
   if(d.type==='musab:connect'){
    if(starting)return;starting=true;status('Connecting your browser…');
    const result=await fetch('/session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticket:d.ticket})});
-   if(!result.ok)throw new Error(await result.text());authenticated=true;await locationPermission.require();initialized??=initialise().catch(error=>{initialized=undefined;throw error});await initialized;starting=false;frame.go(validUrl(d.url));send('musab:connected');return;
+   if(!result.ok)throw new Error(await result.text());authenticated=true;initialized??=initialise().catch(error=>{initialized=undefined;throw error});await initialized;starting=false;frame.go(validUrl(d.url));send('musab:connected');return;
   }
   if(d.type==='musab:refresh'){const r=await fetch('/session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticket:d.ticket})});if(!r.ok)throw new Error('Sign in again to reconnect.');return}
-  if(!authenticated||!frame||!locationPermission.allowed)return;
+  if(!authenticated||!frame)return;
   if(d.type==='musab:navigate')frame.go(validUrl(d.url));
   if(d.type==='musab:back')frame.back();
   if(d.type==='musab:forward')frame.forward();

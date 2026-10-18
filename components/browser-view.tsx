@@ -14,7 +14,6 @@ export function BrowserView({url,reloadKey,command,onNavigate}:{url:string,reloa
    const d=e.data;if(!d||typeof d!=='object')return;
    if(d.type==='musab:ready'){post('musab:connect',{ticket:ticketRef.current,url:target.current});lastUrl.current=target.current}
    if(d.type==='musab:connected'){connected.current=true;if(lastUrl.current!==target.current){lastUrl.current=target.current;post('musab:navigate',{url:target.current})}}
-   if(d.type==='musab:permission'){setLoading(!d.pending);if(d.pending)setError('')}
    if(d.type==='musab:loading')setLoading(true);
    if(d.type==='musab:loaded'){setLoading(false);setError('')}
    if(d.type==='musab:error'){setDetails(typeof d.details==='string'?d.details.slice(0,8000):'');setError(typeof d.error==='string'?d.error.slice(0,400):'Browser connection failed');setLoading(false)}

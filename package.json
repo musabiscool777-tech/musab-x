@@ -15,7 +15,7 @@
     "build:independent": "vite build --config vite.independent.config.ts && node scripts/build-browser.mjs",
     "dev:independent": "vite --config vite.independent.config.ts",
     "deploy:independent": "wrangler deploy --config dist/server/wrangler.json",
-    "test": "node tests/search.test.mjs && node tests/auth.test.mjs && node tests/pages.test.mjs && node tests/live.test.mjs && node tests/email.test.mjs && node tests/browser.test.mjs && node tests/transport.test.mjs && node tests/http-fallback.test.mjs && node tests/permissions.test.mjs && node tests/features.test.mjs && node tests/admin.test.mjs"
+    "test": "node tests/search.test.mjs && node tests/auth.test.mjs && node tests/pages.test.mjs && node tests/live.test.mjs && node tests/email.test.mjs && node tests/browser.test.mjs && node tests/transport.test.mjs && node tests/http-fallback.test.mjs && node tests/features.test.mjs && node tests/admin.test.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
