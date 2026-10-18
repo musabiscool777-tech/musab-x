@@ -17,6 +17,7 @@ export function BrowserView({url,reloadKey,command,onNavigate}:{url:string,reloa
    if(d.type==='musab:loading')setLoading(true);
    if(d.type==='musab:loaded'){setLoading(false);setError('')}
    if(d.type==='musab:error'){setDetails(typeof d.details==='string'?d.details.slice(0,8000):'');setError(typeof d.error==='string'?d.error.slice(0,400):'Browser connection failed');setLoading(false)}
+   if(d.type==='musab:searchfallback'&&typeof d.url==='string'){try{const next=new URL(d.url);if(next.protocol==='https:'&&next.hostname==='duckduckgo.com'){lastUrl.current=next.href;setError('');setLoading(true);onNavigateRef.current(next.href,'DuckDuckGo')}}catch{}}
    if(d.type==='musab:url'&&typeof d.url==='string'&&d.url.length<=4000){try{const u=new URL(d.url);if(!['https:','http:'].includes(u.protocol))return;lastUrl.current=u.href;onNavigateRef.current(u.href,typeof d.title==='string'?d.title.slice(0,120):undefined)}catch{}}
    if(d.type==='musab:renew'){try{const t=await ticket();if(t)post('musab:refresh',{ticket:t.ticket})}catch{setError('Sign in again to reconnect the browser.')}}
   };
