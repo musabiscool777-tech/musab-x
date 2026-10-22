@@ -90,3 +90,24 @@
 @media(max-width:1200px){.adminFilters{grid-template-columns:repeat(3,minmax(0,1fr))}.adminFilters .filter{grid-column:1/-1}.adminOverview>div{padding:17px}.adminOverview>div>span{font-size:10px}.memberRow{grid-template-columns:34px minmax(0,1fr) 72px 215px;gap:12px}}
 @media(max-width:800px){.adminOverview{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.administrationPanel .pageIntro{align-items:flex-start;flex-direction:column;gap:0}.administrationPanel .subtitle{margin-bottom:18px}.administrationPanel .pageIntro>.buttonRow{margin-bottom:24px}.memberRow{grid-template-columns:34px minmax(0,1fr) auto;align-items:start}.memberActions{grid-column:2/-1;justify-content:flex-start}.memberStatus{margin-top:4px}.memberActions select{max-width:170px;flex:1}.memberCard,.adminActivity{padding:20px}}
 @media(max-width:540px){.adminFilters{grid-template-columns:1fr 1fr}.adminFilters>select:last-child{grid-column:1/-1}.adminOverview>div>span{font-size:9px;gap:7px}.adminOverview>div>span>svg{width:15px}.adminOverview b{font-size:28px}.memberIdentity>b{font-size:12px;flex-wrap:wrap;gap:5px}.memberIdentity>span{font-size:10px}.memberRow{gap:10px;padding:17px 0}.memberCard,.adminActivity{padding:18px}.memberStatus{font-size:9px}.activityRow{flex-wrap:wrap;gap:9px}.activityRow time{width:100%;padding-left:15px}.adminConfirmCopy{font-size:13px}.administrationPanel .pageIntro h1{font-size:32px}.adminFilters input{font-size:16px!important}}
+
+
+/* Compact browsing controls and page actions. */
+.tabline .tabs{flex:1;min-width:0;max-width:none;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.tabline .chromeLabel{flex-shrink:0}
+.tab:hover{background:color-mix(in srgb,var(--input) 65%,transparent)}
+.tab.active{box-shadow:inset 0 2px 0 var(--lime)}
+.tab>button:first-child{height:100%}.tab>button:first-child>svg{flex-shrink:0}
+.tab>button:last-child{margin-right:4px;border-radius:5px;display:grid;place-items:center}
+.tab>button:last-child:hover{background:var(--line);color:var(--fg)}
+.urlForm:focus-within{border-color:var(--lime);box-shadow:0 0 0 2px color-mix(in srgb,var(--lime) 12%,transparent)}
+.pageActionPreview{padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--bg);margin-bottom:14px}
+.pageActionPreview b,.pageActionPreview small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pageActionPreview b{font-size:13px;font-weight:550}.pageActionPreview small{font-size:11px;color:var(--muted);margin-top:7px}
+.pageActionList{display:flex;flex-direction:column;gap:5px}
+.pageActionList>button{display:flex;align-items:center;gap:14px;padding:14px 12px;border-radius:10px;text-align:left;min-width:0}
+.pageActionList>button:hover:not(:disabled){background:var(--input)}
+.pageActionList>button>svg{flex-shrink:0;color:var(--lime)}
+.pageActionList>button>span{min-width:0}.pageActionList b{display:block;font-size:13px;font-weight:500}
+.pageActionList small{display:block;color:var(--muted);font-size:11px;line-height:1.5;margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:540px){.tabline{padding-left:8px;padding-right:8px;gap:4px}.tabline .chromeLabel{display:none}.tab{width:155px}.pageActionList>button{padding:13px 8px}}
