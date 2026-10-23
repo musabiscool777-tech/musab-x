@@ -111,3 +111,27 @@
 .pageActionList>button>span{min-width:0}.pageActionList b{display:block;font-size:13px;font-weight:500}
 .pageActionList small{display:block;color:var(--muted);font-size:11px;line-height:1.5;margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media(max-width:540px){.tabline{padding-left:8px;padding-right:8px;gap:4px}.tabline .chromeLabel{display:none}.tab{width:155px}.pageActionList>button{padding:13px 8px}}
+
+
+/* Search and saved-page suggestions. */
+.chrome{position:relative;z-index:20}.hero{overflow:visible}.heroSearch{z-index:6}
+.urlForm,.heroSearch{position:relative}.searchField{flex:1;min-width:0;display:flex;align-items:center;gap:4px}
+.searchField input{flex:1;width:100%;min-width:0;height:32px}
+.searchField .clearSearch{display:grid;place-items:center;flex-shrink:0;width:24px;height:26px;padding:0;background:transparent;border-radius:5px;color:var(--muted)}
+.searchField .clearSearch:hover{background:var(--input);color:var(--fg)}
+.engineSelect{max-width:110px;min-width:0;border:0;border-right:1px solid var(--line);border-radius:0;background:transparent;color:var(--fg);font-size:11px;padding:3px 10px 3px 0;height:26px}
+.engineSelect option{background:var(--panel);color:var(--fg)}.addressEngine{max-width:100px;font-size:10px}
+.searchSuggestions{position:absolute;top:calc(100% + 8px);left:-1px;right:-1px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:12px;box-shadow:0 20px 50px #0005;padding:8px;z-index:60;text-align:left}
+.suggestionHeading{display:flex;justify-content:space-between;gap:8px;font-size:8px;letter-spacing:1px;color:var(--muted);padding:8px 9px 11px}
+.suggestionHeading span{letter-spacing:0;white-space:nowrap}.searchSuggestions [role=listbox]{max-height:310px;overflow:auto;scrollbar-width:thin}
+.searchSuggestions [role=option]{display:flex;align-items:center;gap:11px;padding:11px 9px;width:100%;height:auto;border-radius:7px;background:transparent;color:var(--fg);text-align:left}
+.searchSuggestions [role=option]:hover,.searchSuggestions [aria-selected=true]{background:var(--input)}
+.searchSuggestions [role=option]>svg{color:var(--muted);flex-shrink:0}.searchSuggestions [role=option]>span{flex:1;min-width:0}
+.searchSuggestions b{display:block;font-weight:500;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.searchSuggestions small{display:block;font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4px}
+.searchSuggestions em{font-size:9px;color:var(--lime);font-style:normal;white-space:nowrap}
+.suggestionHint{display:flex;gap:6px;align-items:center;border-top:1px solid var(--line);padding:10px 9px 4px;margin-top:7px;color:var(--muted);font-size:9px;line-height:1.6}
+@media(max-width:900px){.addressEngine{display:none}.urlForm kbd{display:none}}
+@media(max-width:540px){.heroSearch{gap:8px;padding-left:12px}.heroSearch>svg{display:none}.engineSelect{max-width:90px;font-size:10px;padding-right:6px}.heroSearch input{font-size:14px}.searchSuggestions [role=listbox]{max-height:38dvh}.suggestionHeading{font-size:7px;letter-spacing:.4px}.suggestionHeading span{display:none}.searchSuggestions em{display:none}.suggestionHint{font-size:8px}.heroSearch .searchSuggestions{left:-1px;right:-1px}}
+
+.heroArtwork{position:absolute;inset:0;overflow:hidden;pointer-events:none}

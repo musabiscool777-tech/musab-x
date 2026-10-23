@@ -9,3 +9,7 @@ export function liveSearchUrl(query:string,safe:string='strict',engine:string='g
  url.search=new URLSearchParams({q:query,safe:safe==='strict'?'active':'off'}).toString();
  return url.href;
 }
+export function alternateSearchUrl(raw:string){
+ try{const url=new URL(raw);if(url.protocol==='https:'&&/(^|\.)google\.com$/.test(url.hostname)&&url.searchParams.has('q'))return liveSearchUrl(url.searchParams.get('q')||'',url.searchParams.get('safe')==='off'?'moderate':'strict','duckduckgo')}catch{}
+ return '';
+}
