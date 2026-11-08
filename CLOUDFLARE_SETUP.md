@@ -61,7 +61,7 @@ Add this encrypted **build secret**:
 
 The configuration script embeds only public settings in Worker configuration. The deployment script sends the Client Secret through stdin as the runtime secret `GITHUB_CLIENT_SECRET`; it is never committed or included in frontend assets. Cloudflare's generated build token must also have **D1 Edit** permission to apply database migrations. Restrict token access to the intended Cloudflare account.
 
-Trigger a build or retry the initial import build after all settings are entered. After deployment succeeds, open the actual Cloudflare Worker URL, search, sign in with GitHub, save a bookmark, and verify it on a second device. Use the GitHub account associated with `OWNER_GITHUB_ID` for administrator access.
+Trigger a build or retry the initial import build after all settings are entered. After deployment succeeds, open the Cloudflare Worker URL in a private window and verify that a search works without signing in. Then sign in with GitHub, make a search, and verify the history after signing in on a second device. Use the GitHub account associated with `OWNER_GITHUB_ID` for administrator access.
 
 ## Alternative: GitHub Actions
 
@@ -91,7 +91,7 @@ The build token must permit Workers deployment for **both** `musab-x` and `musab
 
 Sign in and search normally. The original Google page loads within the workspace, without a streamed browser's tab/address bar. Search, click, scroll, and use the outer back/forward/reload buttons. Live tabs stay mounted when changing workspace sections. Fullscreen expands only the website. Pages use native image/text quality and local scrolling, so stream-quality and paid-session duration controls are removed.
 
-Browser access uses a one-use short-lived ticket and a separate HttpOnly session cookie. The eight-hour account authorization refreshes automatically; there is no two-minute browser timer. Cloudflare's free usage/CPU limits still apply. Outbound TCP to Cloudflare-hosted IPs is blocked by Cloudflare, so some websites will be unavailable. Google may show CAPTCHA or consent. See README for technical limits and browser/NOTICE.txt for licenses and source.
+Browser access uses a one-use short-lived ticket and a separate HttpOnly session cookie. The eight-hour relay session refreshes automatically; there is no two-minute browser timer. Cloudflare's free usage/CPU limits still apply. Outbound TCP to Cloudflare-hosted IPs is blocked by Cloudflare, so some websites will be unavailable. Google may show CAPTCHA or consent. See README for technical limits and browser/NOTICE.txt for licenses and source.
 
 Existing runtime secrets are preserved. `BROWSERLESS_TOKEN` is only used by the older compatibility endpoint and `SERPAPI_KEY` only by the older result API. Neither powers the current live browser.
 

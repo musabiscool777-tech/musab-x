@@ -2,10 +2,12 @@ import {validUrl,verify} from '../lib/web';
 
 // Authenticated HTTP relay for website reads and one-time form/API submissions.
 // Website headers travel as metadata; they never become workspace cookies.
-export async function relayHttp(r:Request,authorize:(r:Request)=>Promise<boolean>,fetcher:typeof fetch=fetch,verifyTarget=verify){
+export async function relayHttp(r:Request,authorize:(r:Request)=>Promise<boolean|Response>,fetcher:typeof fetch=fetch,verifyTarget=verify){
  const outer=new URL(r.url),failure=(message:string,status:number)=>new Response(message,{status,headers:{'Cache-Control':'no-store','Content-Type':'text/plain'}});
  if(r.method!=='POST'||r.headers.get('origin')!==outer.origin||!r.headers.get('content-type')?.includes('application/json'))return failure('Invalid browser request',403);
- if(!await authorize(r))return failure('Sign in again to reconnect the browser.',401);
+ const access=await authorize(r);
+ if(access instanceof Response)return access;
+ if(!access)return failure('Browser session unavailable. Reconnect to try again.',401);
  let input:any;
  try{
   const reader=r.body?.getReader();if(!reader)throw new Error();let size=0,text='';const decoder=new TextDecoder();

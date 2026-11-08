@@ -15,7 +15,7 @@ const mf=new Miniflare({modules:true,script:'export default {fetch(){return new 
 try{
  for(const [name,file] of [['github-auth','lib/github-auth.ts'],['web','lib/web.ts'],['ticket','lib/browser-ticket.ts'],['auth','browser/auth.ts'],['wisp','browser/wisp.ts']])writeFileSync(join(dir,name+'.mjs'),compile(readFileSync(file,'utf8').replace(/'\.\.?\/lib\/github-auth'|'\.\/github-auth'/g,"'./github-auth.mjs'").replace("'../lib/web'","'./web.mjs'")));
  const {browserOrigin,issueBrowserTicket}=await import(pathToFileURL(join(dir,'ticket.mjs')));
- const {exchangeTicket,relayAccount}=await import(pathToFileURL(join(dir,'auth.mjs')));
+ const {exchangeTicket,relaySession}=await import(pathToFileURL(join(dir,'auth.mjs')));
  const {resolvePublic,serveWisp,packet}=await import(pathToFileURL(join(dir,'wisp.mjs')));
  const calls=[];
  const spawnCommand=(executable,args,options)=>{const child=new EventEmitter();child.stdin=new EventEmitter();child.stdin.end=value=>{child.input=value};calls.push({args,options,child});queueMicrotask(()=>child.emit('close',0));return child};
@@ -26,16 +26,27 @@ try{
  const env={DB,APP_ORIGIN:'https://musab.example'},origin='https://browser.example';
  assert.equal(browserOrigin({APP_ORIGIN:'https://musab-x.user.workers.dev'}),'https://musab-x-browser.user.workers.dev');
  assert.throws(()=>browserOrigin({APP_ORIGIN:origin,BROWSER_ORIGIN:origin}),/separate/);
+ await DB.prepare('INSERT INTO browser_sessions (token_hash,account_id,expires) VALUES (?,?,?)').bind('legacy','member',Date.now()+60000).run();
  const ticket=await issueBrowserTicket(DB,'member');assert.match(ticket,/^[\w-]{43}$/);
+ await DB.exec(readFileSync('drizzle/0006_guest_browser.sql','utf8').split('\n').slice(1).join('\n').replaceAll('\n',' '));
+ assert.equal((await DB.prepare("SELECT account_id FROM browser_sessions WHERE token_hash='legacy'").first()).account_id,'member');
  const request=(token=ticket,headers={})=>new Request(origin+'/session',{method:'POST',headers:{origin,'content-type':'application/json',...headers},body:JSON.stringify({ticket:token})});
  assert.equal((await exchangeTicket(request(ticket,{origin:env.APP_ORIGIN}),env)).status,403);
  const [a,b]=await Promise.all([exchangeTicket(request(),env),exchangeTicket(request(),env)]);assert.deepEqual([a.status,b.status].sort(),[200,401]);
  const response=a.status===200?a:b,cookie=response.headers.get('set-cookie');assert.match(cookie,/Secure; HttpOnly; SameSite=None; Partitioned/);assert.ok(!cookie.includes(ticket));
  const authenticated=()=>new Request(origin+'/wisp/',{headers:{cookie:cookie.split(';')[0]}});
- assert.equal((await relayAccount(authenticated(),env)).id,'member');
- assert.equal(await relayAccount(new Request(origin+'/wisp/',{headers:{cookie:'__Host-musab_session='+ticket}}),env),null);
- await DB.prepare('UPDATE accounts SET disabled=1 WHERE id=?').bind('member').run();assert.equal(await relayAccount(authenticated(),env),null);
+ assert.equal((await relaySession(authenticated(),env)).account_id,'member');
+ assert.equal(await relaySession(new Request(origin+'/wisp/',{headers:{cookie:'__Host-musab_session='+ticket}}),env),null);
+ await DB.prepare('UPDATE accounts SET disabled=1 WHERE id=?').bind('member').run();assert.equal(await relaySession(authenticated(),env),null);
  const blocked=await issueBrowserTicket(DB,'member');assert.equal((await exchangeTicket(request(blocked),env)).status,403);
+ const guest=await issueBrowserTicket(DB,null);
+ const guestResponse=await exchangeTicket(request(guest),env);assert.equal(guestResponse.status,200);
+ assert.equal((await exchangeTicket(request(guest),env)).status,401);
+ const guestRequest=new Request(origin+'/wisp/',{headers:{cookie:guestResponse.headers.get('set-cookie').split(';')[0]}});
+ assert.deepEqual(await relaySession(guestRequest,env),{account_id:null});
+ assert.equal((await DB.prepare('SELECT COUNT(*) AS total FROM accounts').first()).total,1);
+ await DB.prepare('UPDATE browser_sessions SET expires=0 WHERE account_id IS NULL').run();
+ assert.equal(await relaySession(guestRequest,env),null);
  const expired=await issueBrowserTicket(DB,'member');await DB.prepare('UPDATE browser_tickets SET expires=0').run();assert.equal((await exchangeTicket(request(expired),env)).status,401);
  for(const host of ['localhost','metadata.internal','127.0.0.1','169.254.169.254','[::1]','evil\u0000.com','10.0.0.1'])await assert.rejects(()=>resolvePublic(host,()=>{throw new Error('Must not resolve')}));
  const dns=answers=>async()=>Response.json({Answer:answers.map(data=>({type:1,data}))});
@@ -82,5 +93,5 @@ try{
  }finally{await runtime.dispose()}
  // The isolated browser must never use the workspace origin for rewritten pages.
  const component=readFileSync('components/browser-view.tsx','utf8');assert.ok(component.includes("e.source!==iframe.current?.contentWindow"));assert.ok(component.includes("e.origin!==originRef.current"));assert.ok(!readFileSync('app/page.tsx','utf8').includes("api('/api/live'"));
- console.log('Passed one-use browser tickets, disabled/expired account rejection, isolated cookies, public-DNS pinning, Wisp handshake/FIFO/data/flow-control/close, and invalid packet checks.');
+ console.log('Passed one-use browser tickets, guest sessions, disabled/expired account rejection, isolated cookies, public-DNS pinning, Wisp handshake/FIFO/data/flow-control/close, and invalid packet checks.');
 }finally{await mf.dispose();rmSync(dir,{recursive:true,force:true})}

@@ -4,6 +4,7 @@ declare namespace Cloudflare {
     AUTH_MODE?: 'github' | 'sites';
     APP_ORIGIN?: string;
     BROWSER_ORIGIN?: string;
+    GUEST_TICKETS?: RateLimit;
     GITHUB_CLIENT_ID?: string;
     GITHUB_CLIENT_SECRET?: string;
     OWNER_GITHUB_ID?: string;

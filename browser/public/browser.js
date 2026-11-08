@@ -50,7 +50,7 @@ window.addEventListener('message',async event=>{
    const result=await fetch('/session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticket:d.ticket})});
    if(!result.ok)throw new Error(await result.text());authenticated=true;initialized??=initialise().catch(error=>{initialized=undefined;throw error});await initialized;starting=false;frame.go(validUrl(d.url));send('musab:connected');return;
   }
-  if(d.type==='musab:refresh'){const r=await fetch('/session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticket:d.ticket})});if(!r.ok)throw new Error('Sign in again to reconnect.');return}
+  if(d.type==='musab:refresh'){const r=await fetch('/session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticket:d.ticket})});if(!r.ok)throw new Error(await r.text());return}
   if(!authenticated||!frame)return;
   if(d.type==='musab:navigate')frame.go(validUrl(d.url));
   if(d.type==='musab:back')frame.back();
@@ -59,5 +59,5 @@ window.addEventListener('message',async event=>{
  }catch(error){fail(error)}
 });
 send('musab:ready');
-// Refresh the relay's account session without replacing the loaded website.
+// Refresh the relay session without replacing the loaded website.
 setInterval(()=>send('musab:renew'),6*3600000);
