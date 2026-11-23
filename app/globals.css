@@ -141,7 +141,8 @@
 .atomHome { position:relative; isolation:isolate; min-height:calc(100svh - 160px); }
 .content:has(.atomHome) { padding:0; max-width:none; }
 .atomHome { padding:clamp(16px,3vw,44px); min-height:calc(100svh - 104px); }
-.atomSky { position:absolute; inset:0; z-index:-1; pointer-events:none;
+.atomSky { position:absolute; inset:0; z-index:-1; pointer-events:none; overflow:hidden; }
+.atomSky::before { content:""; position:absolute; inset:-4%;
   background:linear-gradient(to bottom,transparent 78%,var(--bg)), url('/atom-galaxy.webp') center top/cover no-repeat; }
 .atomHome .hero { text-align:center; }
 .atomGreeting { margin:0 auto 12px; color:#dce4fc; letter-spacing:.34em; font-size:12px; font-weight:600; text-transform:uppercase; }
@@ -174,4 +175,24 @@
   .app .main { margin-left:0; width:100%; }
   .app .mobileMenu { display:flex; }
   .app .menuBackdrop { display:block; position:fixed; inset:0; z-index:31; background:#0008; }
+}
+
+/* Independent layers give the new-tab sky depth as the moon crosses the stars. */
+.atomSky::after {
+  content:""; position:absolute; top:10%; right:14%;
+  width:clamp(36px,5vw,78px); aspect-ratio:1; border-radius:50%;
+  box-shadow:inset -0.85em -0.5em 0 #dbe4ef;
+  font-size:clamp(10px,1.25vw,22px); transform:rotate(22deg);
+}
+@keyframes atomGalaxyDrift {
+  from { transform:translate(-1.8%,0.8%) scale(1.01); }
+  to { transform:translate(1.8%,-0.8%) scale(1.035); }
+}
+@keyframes atomMoonDrift {
+  from { transform:translate(-24px,9px) rotate(18deg); }
+  to { transform:translate(22px,-12px) rotate(33deg); }
+}
+@media (prefers-reduced-motion:no-preference) {
+  .app:not(.reduceMotion) .atomSky::before { animation:atomGalaxyDrift 26s ease-in-out infinite alternate; }
+  .app:not(.reduceMotion) .atomSky::after { animation:atomMoonDrift 15s ease-in-out infinite alternate; }
 }
