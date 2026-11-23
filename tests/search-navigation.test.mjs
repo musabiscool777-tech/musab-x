@@ -13,6 +13,8 @@ try{
  const {alternateSearchUrl}=await import(pathToFileURL(join(dir,'live-search.mjs')));
  for(const [raw,expected] of [[' example.com#section ','https://example.com/#section'],['example.com/path?q=one#two','https://example.com/path?q=one#two'],['HTTPS://EXAMPLE.COM/a','https://example.com/a'],['site:nasa.gov space','site:nasa.gov space'],['weather tomorrow','weather tomorrow'],['مثال.إختبار','https://xn--mgbh0fb.xn--kgbechtv/']])assert.equal(normalizeNavigation(raw),expected);
  for(const raw of ['javascript:alert(1)','data:text/html,hello','file:///etc/passwd','ftp://example.com','https://user:pass@example.com','http://example.com','a'.repeat(4001)])assert.throws(()=>normalizeNavigation(raw));
+ for(const raw of ['https://example.com/a\u202eb','https://exam\tple.com','custom://example.com','//example.com'])assert.throws(()=>normalizeNavigation(raw));
+ assert.equal(normalizeNavigation('site:example.com astronomy'),'site:example.com astronomy');
  for(const raw of ['ع'.repeat(1000),'!d '+'ع'.repeat(1000),'a'.repeat(3990)])assert.throws(()=>normalizeNavigation(raw),'Encoded destinations fit workspace storage limits');
  for(const prefix of ['!d','!ddg','!g','!G']){const url=new URL(normalizeNavigation(prefix+' space & stars','strict'));assert.equal(url.searchParams.get('q'),'space & stars');assert.equal(url.hostname,prefix.toLowerCase()==='!g'?'www.google.com':'duckduckgo.com');assert.equal(url.searchParams.get(prefix.toLowerCase()==='!g'?'safe':'kp'),prefix.toLowerCase()==='!g'?'active':'1')}
  const tabs=[{id:'a',title:'NASA stars',input:'https://nasa.gov/A',kind:'page'},{id:'b',title:'New tab',input:'',kind:'home'}];

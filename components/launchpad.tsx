@@ -1,9 +1,10 @@
 'use client';
 import {useState} from 'react';
-import {BookOpen,Plus,Trash2} from 'lucide-react';
+import {BookOpen,Gamepad2,Joystick,MessageCircle,Plus,Trash2} from 'lucide-react';
 import {WorkspaceDialog} from './workspace-dialog';
 type Shortcut={id:string;title:string;url:string};
 type Starter={title:string;url:string;letter:string;color:string};
+const shortcutIcons:Record<string,typeof Gamepad2>={CrazyGames:Gamepad2,Poki:Joystick,Discord:MessageCircle};
 export function Launchpad({shortcuts,starters,onAdd,onRemove,onOpen,onStudy}:{shortcuts:Shortcut[];starters:Starter[];onAdd:(entry:Shortcut)=>void;onRemove:(id:string)=>void;onOpen:(url:string)=>void;onStudy:()=>void}){
  const [adding,setAdding]=useState(false),[error,setError]=useState('');
  function submit(event:React.FormEvent<HTMLFormElement>){event.preventDefault();const data=new FormData(event.currentTarget);try{
@@ -17,7 +18,7 @@ export function Launchpad({shortcuts,starters,onAdd,onRemove,onOpen,onStudy}:{sh
  return <section className="quicklinks" aria-label="Shortcuts">
  <div className="homeShortcuts">
   <button className="homeShortcut" onClick={onStudy}><span className="shortcutDisc"><BookOpen size={20}/></span>Study</button>
-  {starters.map(s=><button className="homeShortcut" key={s.url} onClick={()=>onOpen(s.url)}><span className="shortcutDisc" style={{color:s.color}}>{s.letter}</span>{s.title}</button>)}
+  {starters.map(s=>{const Icon=shortcutIcons[s.title];return <button className="homeShortcut" key={s.url} onClick={()=>onOpen(s.url)}><span className="shortcutDisc" style={{color:s.color}}>{Icon?<Icon size={19}/>:s.letter}</span>{s.title}</button>})}
   {shortcuts.map(s=><div className="savedShortcut" key={s.id}>
    <button className="homeShortcut" onClick={()=>onOpen(s.url)}><span className="shortcutDisc">{s.title[0]?.toUpperCase()}</span>{s.title}</button>
    <button className="removeShortcut" aria-label={'Remove shortcut '+s.title} onClick={()=>onRemove(s.id)}><Trash2 size={12}/></button>

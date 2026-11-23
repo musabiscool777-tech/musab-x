@@ -4,6 +4,11 @@ export type SearchSuggestion={id:string;title:string;value:string;kind:'tab'|'bo
 export function normalizeNavigation(raw:string,safe='strict',engine='google'){
  const value=raw.trim();if(!value)return '';
  if(value.length>4000)throw new Error('Keep searches and website addresses under 4,000 characters.');
+ // Reject hidden direction changes in addresses before URL parsing can obscure the destination.
+ if(/[\u0000-\u001f\u007f\u202a-\u202e\u2066-\u2069]/u.test(value)&&/^(?:[a-z][a-z\d+.-]*:|[^\s/]+\.[^\s/]+[/?#])/i.test(value))
+  throw new Error('This address contains hidden formatting. Type the website address directly.');
+ if(/^(?:[a-z][a-z\d+.-]*:\/\/|\/\/)/i.test(value)&&!/^https:\/\//i.test(value))
+  throw new Error('Enter a full HTTPS website address.');
  function bounded(destination:string){if(destination.length>4000)throw new Error('This address or search is too long. Try a shorter phrase.');return destination}
  const shortcut=value.match(/^!(g|d|ddg)\s+([\s\S]+)$/i);
  if(shortcut)return bounded(liveSearchUrl(shortcut[2].trim(),safe,shortcut[1].toLowerCase()==='g'?'google':'duckduckgo'));
