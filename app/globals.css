@@ -196,3 +196,16 @@
   .app:not(.reduceMotion) .atomSky::before { animation:atomGalaxyDrift 26s ease-in-out infinite alternate; }
   .app:not(.reduceMotion) .atomSky::after { animation:atomMoonDrift 15s ease-in-out infinite alternate; }
 }
+
+.app .main { width:100%; margin-left:0; }
+.homeTools,.homeShortcuts { display:flex; flex-wrap:wrap; align-items:flex-start; gap:8px; }
+.homeTools { justify-content:flex-end; }
+.homeTools button { display:inline-flex; align-items:center; gap:6px; padding:7px 10px; color:#e4e9fa; background:#151928dc; border:1px solid #ffffff28; border-radius:20px; font-size:12px; }
+.homeShortcuts { justify-content:center; gap:10px; }
+.homeShortcut { display:flex; flex-direction:column; align-items:center; gap:9px; width:88px; padding:10px 4px; border-radius:14px; color:#f4f5ff; background:#101322d9; font-size:12px; overflow-wrap:anywhere; }
+.shortcutDisc { display:grid; place-items:center; width:42px; height:42px; border-radius:50%; background:#272d43; color:#d6dcff; box-shadow:inset 0 0 0 1px #ffffff24; font-size:17px; }
+.homeShortcut:hover,.homeTools button:hover { background:#303750; }
+.savedShortcut { position:relative; }
+.removeShortcut { position:absolute; top:0; right:0; padding:4px; border-radius:50%; color:white; background:#3f4058; }
+.addShortcut .shortcutDisc { background:transparent; border:1px dashed #a6b0d0; }
+@media(max-width:600px){.homeTools {justify-content:center;gap:5px}.homeTools button{padding:7px;font-size:11px}.homeShortcut{width:78px}}
