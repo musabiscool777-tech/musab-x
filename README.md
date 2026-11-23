@@ -44,3 +44,7 @@ Email/password and emailed one-time-code sign-in are implemented using managed S
 ## Validation
 
 `npm test` covers account authentication, email linking, origin checks, one-use browser tickets, disabled/expired access, DNS pinning, and Wisp handshake/data/ordering/flow control. `npm run build:independent` builds the workspace and copies locked browser packages into separate static assets. `npx wrangler deploy --dry-run --config wrangler.browser.json` validates the relay bundle.
+
+## Atom search sponsorship
+
+Atom displays a direct sponsor beside searches submitted through the address bar or new-tab search field, including engine shortcuts. Set `name` and an HTTPS landing-page `url` in `search-sponsor.json` and rebuild after arranging a sponsorship. Empty settings hide the placement. The sponsor receives no search terms from Atom. Billing is handled through the sponsorship agreement.
