@@ -139,14 +139,17 @@
 /* Atom's new-tab sky uses the active workspace theme. */
 .app.dark { --bg:#090b11; --side:#11131b; --panel:#191c27; --input:#202430; --line:#343845; --lime:#ccd3ff; }
 .atomHome { position:relative; isolation:isolate; min-height:calc(100svh - 160px); }
-.atomSky { position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:-1;
-  background:radial-gradient(1px 1px at 15% 24%,var(--muted) 90%,transparent) 0 0/153px 133px,
-             radial-gradient(1px 1px at 67% 83%,var(--muted) 80%,transparent) 0 0/213px 173px; }
-.atomSky::before,.atomSky::after { content:""; position:absolute; border-radius:50%; }
-.atomSky::before { width:72%; aspect-ratio:1; top:24%; right:-43%;
-  background:linear-gradient(145deg,var(--line),var(--side) 35%,var(--bg) 67%); box-shadow:-1px -1px 0 var(--line); }
-.atomSky::after { width:37%; aspect-ratio:1; bottom:-25%; left:-14%; background:linear-gradient(150deg,var(--line),var(--bg) 60%); }
-.atomSky i { position:absolute; right:14%; top:5%; width:48px; height:48px; border-radius:50%; box-shadow:10px 8px 0 var(--muted); transform:rotate(12deg); }
+.content:has(.atomHome) { padding:0; max-width:none; }
+.atomHome { padding:clamp(16px,3vw,44px); min-height:calc(100svh - 104px); }
+.atomSky { position:absolute; inset:0; z-index:-1; pointer-events:none;
+  background:linear-gradient(to bottom,transparent 78%,var(--bg)), url('/atom-galaxy.webp') center top/cover no-repeat; }
+.atomHome .hero { text-align:center; }
+.atomGreeting { margin:0 auto 12px; color:#dce4fc; letter-spacing:.34em; font-size:12px; font-weight:600; text-transform:uppercase; }
+.atomHome .hero h1 { color:#f1f4ff; text-shadow:0 2px 28px #060815; }
+.atomHome .heroSearch,.atomHome .searchSuggestions { text-align:left; }
+.atomHome .topMeta,.atomHome .sectionHeading,.atomHome .searchMeta,.atomHome footer { color:#d6def0; }
+.atomHome .sectionHeading h2,.atomHome .sectionHeading button.bookmarksLink { color:#ebefff; }
+.atomHome .homeCustomize { background:var(--panel); }
 .atomHome .topMeta { justify-content:flex-end; }
 .atomHome .hero { max-width:720px; margin:auto; padding:clamp(60px,10vh,125px) 0 24px; }
 .atomHome .hero h1 { margin:0 auto 30px; padding-left:.14em; font-size:clamp(60px,9vw,124px); font-weight:650; line-height:1; letter-spacing:.14em; }
@@ -157,7 +160,18 @@
 .atomHome .cardTop { margin:0; }
 .atomHome .cardTop > svg { display:none; }
 .atomHome .linkCard b { margin:0; font-size:12px; }
-.searchSponsor { display:flex; align-items:center; gap:12px; padding:8px 18px; background:var(--panel); border-bottom:1px solid var(--line); }
-.searchSponsor small { color:var(--muted); }
-.searchSponsor a { color:var(--fg); text-decoration:underline; }
-@media(max-width:600px) { .atomHome .linkCard { width:88px; } .atomSky i { right:8%; width:32px; height:32px; } }
+@media(max-width:600px) { .atomHome .linkCard { width:88px; } }
+.atomBookmarks,.atomBookmarks div,.atomBookmarks button { display:flex; align-items:center; gap:8px; }
+.atomBookmarks { min-height:34px; padding:0 18px; border-top:1px solid var(--line); overflow:hidden; color:var(--muted); }
+.atomBookmarks div { overflow:auto; scrollbar-width:thin; }
+.atomBookmarks button { flex:none; font-size:12px; max-width:18ch; overflow:hidden; white-space:nowrap; padding:5px 3px; }
+.atomBookmarks button:hover { color:var(--fg); }
+.atomHome .searchMeta { color:#d6def0; }
+@media(min-width:541px) {
+  .app .sidebar { display:none; }
+  .app .sidebar.expanded { display:flex; width:230px; background:var(--side); z-index:32; }
+  .app .sidebar.expanded nav button { font-size:13px; justify-content:flex-start; gap:12px; }
+  .app .main { margin-left:0; width:100%; }
+  .app .mobileMenu { display:flex; }
+  .app .menuBackdrop { display:block; position:fixed; inset:0; z-index:31; background:#0008; }
+}
