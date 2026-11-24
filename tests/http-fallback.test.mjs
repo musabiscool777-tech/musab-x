@@ -42,7 +42,10 @@ try {
  class Failed {async request(){baseCalls++;throw new Error('tls handshake eof')}}
  const payloads=[];
  const Transport=withHttpFallback(Failed,async(path,options)=>{relayed++;assert.equal(path,'/http');assert.equal(options.credentials,'same-origin');const input=JSON.parse(options.body);payloads.push(input);assert.equal(input.url,'https://youtube.com/');return new Response('Video website',{headers:{'X-Musab-Response':Buffer.from(JSON.stringify({status:206,statusText:'Partial Content',headers:{'content-type':'text/html','content-range':'bytes 0-12/13'}})).toString('base64')}})});
- const transport=new Transport();const result=await transport.request(new URL('https://youtube.com/'),'GET',null,{});assert.equal(result.status,206);assert.equal(await new Response(result.body).text(),'Video website');assert.equal(relayed,1);assert.equal(baseCalls,1);
+ const transport=new Transport();const result=await transport.request(new URL('https://youtube.com/'),'GET',null,{'user-agent':'stale value'});
+ assert.equal(payloads[0].headers['User-Agent'],navigator.userAgent);
+ assert.equal(Object.keys(payloads[0].headers).filter(key=>key.toLowerCase()==='user-agent').length,1);
+ assert.equal(result.status,206);assert.equal(await new Response(result.body).text(),'Video website');assert.equal(relayed,1);assert.equal(baseCalls,1);
  await transport.request(new URL('https://youtube.com/'),'POST','field=☀',{});assert.equal(relayed,2);assert.equal(Buffer.from(payloads.at(-1).body,'base64').toString(),'field=☀');assert.equal(baseCalls,1,'Writes never enter the failing Wisp client');
  await transport.request(new URL('https://youtube.com/'),'GET',null,{});assert.equal(baseCalls,1,'Subsequent reads use the same working HTTP path');
  const firstWrite=new Transport();await firstWrite.request(new URL('https://youtube.com/'),'POST',new Uint8Array([0,255,128]),{});assert.equal(baseCalls,1,'First writes go through HTTP before any Wisp attempt');assert.deepEqual([...Buffer.from(payloads.at(-1).body,'base64')],[0,255,128]);

@@ -9,7 +9,7 @@ function validUrl(raw){const u=new URL(raw);if(!['https:','http:'].includes(u.pr
 async function ensureTransport(){
  const setup=async()=>{
   // All workspace tabs share this BareMux worker. Reuse its transport.
-  if(await connection.getTransport()!=='/transport.mjs?v=20261018c')await connection.setTransport('/transport.mjs?v=20261018c',[{wisp:location.origin.replace(/^http/,'ws')+'/wisp/',wisp_v2:false,udp_extension_required:false}]);
+  if(await connection.getTransport()!=='/transport.mjs?v=20261123')await connection.setTransport('/transport.mjs?v=20261123',[{wisp:location.origin.replace(/^http/,'ws')+'/wisp/',wisp_v2:false,udp_extension_required:false}]);
  };
  if(navigator.locks)await navigator.locks.request('musab-browser-transport',setup);else await setup();
 }

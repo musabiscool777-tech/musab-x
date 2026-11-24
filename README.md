@@ -45,4 +45,4 @@ Email/password and emailed one-time-code sign-in are implemented using managed S
 
 `npm test` covers account authentication, email linking, origin checks, one-use browser tickets, disabled/expired access, DNS pinning, and Wisp handshake/data/ordering/flow control. `npm run build:independent` builds the workspace and copies locked browser packages into separate static assets. `npx wrangler deploy --dry-run --config wrangler.browser.json` validates the relay bundle.
 
-Atom opens searches, typed addresses, shortcuts, bookmarks, and history links directly in the device browser by default. Existing Atom tabs offer a direct link when restored. To use the optional embedded browser, turn off **Settings → Browsing → Open websites in your device browser**.
+Atom opens searches, typed addresses, shortcuts and saved links inside Scramjet tabs. The transport uses the browser-provided user agent. Sites see the relay’s network address and use separate website sessions.

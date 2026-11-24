@@ -24,6 +24,12 @@ export function withHttpFallback(Base, fetcher = (...args) => fetch(...args)) {
   async httpRequest(url,method,body,headers,signal) {
    if(signal?.aborted)throw signal.reason||new DOMException('Aborted','AbortError');
    const encodedBody=await encodeBody(body);
+   // Match Epoxy's browser-provided user agent on the HTTP path as well.
+   if(globalThis.navigator?.userAgent){
+    headers={...headers};
+    for(const key of Object.keys(headers))if(key.toLowerCase()==='user-agent')delete headers[key];
+    headers['User-Agent']=globalThis.navigator.userAgent;
+   }
    const response=await fetcher('/http',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:url.href,method,headers,body:encodedBody}),signal});
    if(!response.ok)throw new Error((await response.text()).slice(0,600)||'HTTP relay unavailable');
    const encoded=response.headers.get('X-Musab-Response');
