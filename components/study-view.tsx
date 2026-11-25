@@ -3,7 +3,7 @@ const studyPage = String.raw`<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mufasa Files | Premium Edition</title>
+<title>Astra</title>
 <script src="https://unpkg.com/lucide@latest"></script>
 <style>
 :root {
@@ -235,7 +235,7 @@ input[type="button"]:hover {
 <nav class="sidebar" id="sidebar" aria-label="Resource categories"></nav>
 <main class="main-content">
   <header>
-    <h1>MUFASA FILES</h1>
+    <h1>ASTRA</h1>
     <p class="sub-header">Made for educational and entertainment purposes only,
     I am not responsible for the use of these game and am not the owner.</p>
     <p style="color: var(--accent); opacity: 0.8;">Ty to UGS files | Youtube: Mufasa-772</p>
@@ -332,10 +332,10 @@ input[type="button"]:hover {
 </body>
 </html>`;
 
-export function StudyView() {
+export function AstraView() {
   return (
     <iframe
-      title="Study"
+      title="Astra"
       srcDoc={studyPage}
       sandbox="allow-scripts allow-popups"
       referrerPolicy="no-referrer"

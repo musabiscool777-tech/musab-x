@@ -310,3 +310,14 @@
 .tutorCard textarea { width:100%; resize:vertical; padding:12px; background:var(--input); color:var(--fg); border:1px solid var(--line); border-radius:8px; }
 .tutorTurn { padding:14px 0; border-top:1px solid var(--line); white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.6; }
 .tutorTurn strong { color:var(--lime); }
+.astraShortcut { text-decoration:none; }
+.astraShortcut .shortcutDisc { background:#38304e; color:#d8bdff; }
+.homeworkStudy header { display:flex; align-items:center; justify-content:space-between; }
+.astraLink { color:var(--fg); font-size:13px; text-underline-offset:4px; }
+.tutorCard { border-top:3px solid #9e91f6; background:radial-gradient(ellipse at top right,color-mix(in srgb,#9375ef 14%,transparent),transparent 60%),var(--panel); }
+.tutorStyles { padding:0; margin:0 0 4px; border:0; display:flex; gap:8px; flex-wrap:wrap; }
+.tutorStyles legend { padding:0; margin-bottom:8px; font-weight:600; }
+.tutorStyles button { border-radius:20px; padding:7px 12px; border:1px solid var(--line); background:var(--input); color:var(--fg); }
+.tutorStyles button[aria-pressed=true] { background:#423767; color:#fff; border-color:#c5adff; }
+.tutorTurn { margin:10px 0; border:0; border-inline-start:3px solid #6fbbb7; border-radius:6px; background:color-mix(in srgb,#62c8bd 9%,var(--panel)); padding:12px 16px; }
+.tutorTurn[data-role=assistant] { border-color:#ac91ef; background:color-mix(in srgb,#aa88ef 10%,var(--panel)); }

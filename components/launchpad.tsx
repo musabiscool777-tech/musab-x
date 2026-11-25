@@ -1,6 +1,6 @@
 'use client';
 import {useState} from 'react';
-import {BookOpen,Gamepad2,Joystick,MessageCircle,Plus,Trash2} from 'lucide-react';
+import {Sparkles,BookOpen,Gamepad2,Joystick,MessageCircle,Plus,Trash2} from 'lucide-react';
 import {WorkspaceDialog} from './workspace-dialog';
 type Shortcut={id:string;title:string;url:string};
 type Starter={title:string;url:string;letter:string;color:string};
@@ -17,6 +17,7 @@ export function Launchpad({shortcuts,starters,onAdd,onRemove,onOpen,onStudy}:{sh
  }catch(e){setError(e instanceof Error?e.message:'Enter a valid website address.')}}
  return <section className="quicklinks" aria-label="Shortcuts">
  <div className="homeShortcuts">
+  <a className="homeShortcut astraShortcut" href="/astra"><span className="shortcutDisc"><Sparkles size={20}/></span>Astra</a>
   <button className="homeShortcut" onClick={onStudy}><span className="shortcutDisc"><BookOpen size={20}/></span>Study</button>
   {starters.map(s=>{const Icon=shortcutIcons[s.title];return <button className="homeShortcut" key={s.url} onClick={()=>onOpen(s.url)}><span className="shortcutDisc" style={{color:s.color}}>{Icon?<Icon size={19}/>:s.letter}</span>{s.title}</button>})}
   {shortcuts.map(s=><div className="savedShortcut" key={s.id}>
