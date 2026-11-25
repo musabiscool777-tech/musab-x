@@ -27,6 +27,6 @@ export function SearchField({id,label,placeholder,value,onChange,onNavigate,onTa
   {open&&<div className="searchSuggestions"><div className="suggestionHeading">YOUR TABS & SAVED DISCOVERIES <span>↑ ↓ · Enter</span></div><div id={id+'-suggestions'} role="listbox" aria-label="Search suggestions" ref={list}>{matches.map((item,index)=>{
    const Icon=item.kind==='tab'?Globe:item.kind==='bookmark'?Bookmark:Clock;
    return <button type="button" role="option" id={item.id+':'+id} aria-selected={index===cursor} key={item.id} onPointerDown={e=>e.preventDefault()} onClick={()=>choose(index)} onMouseEnter={()=>setCursor(index)}><Icon size={16}/><span><b>{item.title}</b><small>{item.value}</small></span><em>{item.kind==='tab'?'Switch tab':item.kind==='bookmark'?'Bookmark':'Recent'}</em><CornerDownLeft size={13}/></button>
-  })}</div><div className="suggestionHint"><Search size={12}/>Enter searches {engine==='duckduckgo'?'DuckDuckGo':'Google'} · Alt + Enter opens a new tab</div></div>}
+  })}</div><div className="suggestionHint"><Search size={12}/>Enter searches {engine==='brave'?'Brave':engine==='duckduckgo'?'DuckDuckGo':'Google'} · Alt + Enter opens a new tab</div></div>}
  </div>;
 }

@@ -299,3 +299,14 @@
 .policyPage p { margin:6px 0 12px; color:#ced3df; }
 .policyBack { color:#d5dcff; text-underline-offset:3px; }
 @media(max-width:640px){.policyTool span{display:none}}
+.standaloneStudy { display:block; padding:clamp(18px,4vw,48px); }
+.standaloneStudy>a { color:var(--lime); }
+.homeworkStudy { padding:24px 8px; max-width:850px; margin:auto; width:100%; color:var(--fg); }
+.homeworkStudy header,.homeworkStudy form { display:grid; gap:12px; }
+.homeworkStudy header { margin-bottom:20px; }
+.homeworkStudy [aria-pressed=true] { border-color:var(--lime); }
+.tutorCard { padding:clamp(16px,3vw,32px); border:1px solid var(--line); border-radius:16px; background:var(--panel); }
+.tutorCard p,.tutorCard small { color:var(--muted); margin:8px 0 18px; }
+.tutorCard textarea { width:100%; resize:vertical; padding:12px; background:var(--input); color:var(--fg); border:1px solid var(--line); border-radius:8px; }
+.tutorTurn { padding:14px 0; border-top:1px solid var(--line); white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.6; }
+.tutorTurn strong { color:var(--lime); }

@@ -1,5 +1,7 @@
 declare namespace Cloudflare {
   interface Env {
+    AI?: Ai;
+    TUTOR_LIMIT?: RateLimit;
     ASSETS: Fetcher;
     DB?: D1Database;
     AUTH_MODE?: 'github' | 'sites';

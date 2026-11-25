@@ -1,5 +1,10 @@
 // Load the original search page rather than a results API or reader.
 export function liveSearchUrl(query:string,safe:string='strict',engine:string='google'){
+ if(engine==='brave'){
+  const url=new URL(safe==='strict'?'https://safe.search.brave.com/search':'https://search.brave.com/search');
+  url.search=new URLSearchParams({q:query,safesearch:safe==='strict'?'strict':'moderate'}).toString();
+  return url.href;
+ }
  if(engine==='duckduckgo'){
   const url=new URL('https://duckduckgo.com/');
   url.search=new URLSearchParams({q:query,kp:safe==='strict'?'1':'-1'}).toString();

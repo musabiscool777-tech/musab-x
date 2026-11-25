@@ -10,8 +10,8 @@ export function normalizeNavigation(raw:string,safe='strict',engine='google'){
  if(/^(?:[a-z][a-z\d+.-]*:\/\/|\/\/)/i.test(value)&&!/^https:\/\//i.test(value))
   throw new Error('Enter a full HTTPS website address.');
  function bounded(destination:string){if(destination.length>4000)throw new Error('This address or search is too long. Try a shorter phrase.');return destination}
- const shortcut=value.match(/^!(g|d|ddg)\s+([\s\S]+)$/i);
- if(shortcut)return bounded(liveSearchUrl(shortcut[2].trim(),safe,shortcut[1].toLowerCase()==='g'?'google':'duckduckgo'));
+ const shortcut=value.match(/^!(g|d|ddg|b)\s+([\s\S]+)$/i);
+ if(shortcut)return bounded(liveSearchUrl(shortcut[2].trim(),safe,shortcut[1].toLowerCase()==='b'?'brave':shortcut[1].toLowerCase()==='g'?'google':'duckduckgo'));
  if(/^(?:javascript|data|file|ftp|mailto|vbscript):/i.test(value))throw new Error('Use a public HTTPS website address or enter a search.');
  if(/^https?:\/\//i.test(value)){const url=new URL(value);if(url.protocol!=='https:'||url.username||url.password)throw new Error('Use a public HTTPS address without a username or password.');return bounded(url.href)}
  if(/^(?:[\p{L}\p{N}_-]+\.)+[\p{L}\p{N}_-]+(?::\d{1,5})?(?:[/?#]\S*)?$/u.test(value))return bounded(new URL('https://'+value).href);

@@ -21,6 +21,13 @@ try{
  const next=workspace.parse({...parsed,shortcuts:[shortcut],settings:{...parsed.settings,searchEngine:'duckduckgo'}});assert.deepEqual(next.shortcuts,[shortcut]);assert.equal(next.settings.searchEngine,'duckduckgo');
  for(const url of ['javascript:alert(1)','data:text/html,test','http://example.com','https://user:password@example.com/'])assert.equal(workspace.safeParse({...parsed,shortcuts:[{...shortcut,url}]}).success,false,url);
  assert.equal(workspace.safeParse({...parsed,shortcuts:Array.from({length:13},(_,i)=>({...shortcut,id:String(i)}))}).success,false);
+ const braveWorkspace=workspace.parse({...parsed,settings:{...parsed.settings,searchEngine:'brave'}});
+ assert.equal(braveWorkspace.settings.searchEngine,'brave');
+ for(const safe of ['strict','moderate']){
+  const url=new URL(liveSearchUrl('moon & stars',safe,'brave'));
+  assert.equal(url.hostname,safe==='strict'?'safe.search.brave.com':'search.brave.com');
+  assert.equal(url.searchParams.get('q'),'moon & stars');
+ }
  for(const engine of ['google','duckduckgo'])for(const safe of ['strict','moderate']){
   const query='space & stars + العربية';const url=new URL(liveSearchUrl(query,safe,engine));assert.equal(url.protocol,'https:');assert.equal(url.searchParams.get('q'),query);
   if(engine==='duckduckgo'){assert.equal(url.hostname,'duckduckgo.com');assert.equal(url.searchParams.get('kp'),safe==='strict'?'1':'-1')}else{assert.equal(url.hostname,'www.google.com');assert.equal(url.searchParams.get('safe'),safe==='strict'?'active':'off')}

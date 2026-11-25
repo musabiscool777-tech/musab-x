@@ -17,6 +17,7 @@ try{
  assert.equal(normalizeNavigation('site:example.com astronomy'),'site:example.com astronomy');
  for(const raw of ['ع'.repeat(1000),'!d '+'ع'.repeat(1000),'a'.repeat(3990)])assert.throws(()=>normalizeNavigation(raw),'Encoded destinations fit workspace storage limits');
  for(const prefix of ['!d','!ddg','!g','!G']){const url=new URL(normalizeNavigation(prefix+' space & stars','strict'));assert.equal(url.searchParams.get('q'),'space & stars');assert.equal(url.hostname,prefix.toLowerCase()==='!g'?'www.google.com':'duckduckgo.com');assert.equal(url.searchParams.get(prefix.toLowerCase()==='!g'?'safe':'kp'),prefix.toLowerCase()==='!g'?'active':'1')}
+ assert.equal(new URL(normalizeNavigation('!b algebra')).hostname,'safe.search.brave.com');
  const tabs=[{id:'a',title:'NASA stars',input:'https://nasa.gov/A',kind:'page'},{id:'b',title:'New tab',input:'',kind:'home'}];
  const bookmarks=[{id:'c',title:'NASA stars',url:'https://nasa.gov/A'},{id:'d',title:'Star atlas',url:'https://nasa.gov/a'},{id:'e',title:'Stars',url:'https://example.com/stars'}];
  const history=[{id:'f',title:'NASA science',url:'https://nasa.gov/science'},{id:'g',title:'NASA stars',url:'https://nasa.gov/A'}];
