@@ -13,6 +13,10 @@ try{
  const {workspace}=await import(pathToFileURL(join(dir,'workspace.mjs'))),{liveSearchUrl}=await import(pathToFileURL(join(dir,'search.mjs')));
  const legacy={bookmarks:[{id:'saved',title:'My page',url:'https://example.com/'}],history:[],notes:'Keep this note',settings:{theme:'dark',newTab:true,history:true,safe:'strict',view:'live'}};
  const parsed=workspace.parse(legacy);assert.deepEqual(parsed.shortcuts,[]);assert.equal(parsed.settings.searchEngine,'google');assert.equal(parsed.notes,legacy.notes);assert.deepEqual(parsed.bookmarks,legacy.bookmarks);
+ assert.equal(parsed.settings.wallpaper,'Moon');
+ for(const wallpaper of ['Sun','Moon','Galaxy','Saturn']){
+  assert.equal(workspace.parse({...parsed,settings:{...parsed.settings,wallpaper}}).settings.wallpaper,wallpaper);
+ }
  const shortcut={id:'one',title:'Example',url:'https://example.com/path?q=a%26b'};
  const next=workspace.parse({...parsed,shortcuts:[shortcut],settings:{...parsed.settings,searchEngine:'duckduckgo'}});assert.deepEqual(next.shortcuts,[shortcut]);assert.equal(next.settings.searchEngine,'duckduckgo');
  for(const url of ['javascript:alert(1)','data:text/html,test','http://example.com','https://user:password@example.com/'])assert.equal(workspace.safeParse({...parsed,shortcuts:[{...shortcut,url}]}).success,false,url);

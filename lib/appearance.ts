@@ -13,3 +13,5 @@ export const themes = [
   {id:'ember',name:'Ember',description:'Warm light after dark.',background:'#211811',surface:'#3a2b20',accent:'#f0b57b',dark:true},
   {id:'contrast',name:'High Contrast',description:'Clear edges. Bold details.',background:'#050505',surface:'#202020',accent:'#ffe65a',dark:true},
 ] as const;
+
+export const wallpaperIds=['Moon','Sun','Galaxy','Saturn'] as const;

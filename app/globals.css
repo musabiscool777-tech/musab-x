@@ -248,3 +248,21 @@
  .tabline:has(.homeTools){flex-wrap:wrap;height:auto}
  .tabline .homeTools{width:100%;justify-content:flex-end}
 }
+
+.wallpaperPicker { display:flex; width:fit-content; margin-left:auto; align-items:center; gap:6px; padding:3px 8px; border:1px solid #ffffff25; background:#10131be6; border-radius:12px; font-size:11px; color:#d5d8e4; }
+.wallpaperPicker select { font:inherit; padding:4px; color:#f2f4ff; background:#171a24; border:0; border-radius:5px; color-scheme:dark; }
+.atomSky[data-wallpaper="Sun"]::before { filter:none; background:radial-gradient(ellipse at 78% 18%,#68401e 0%,#312030 21%,#100f20 47%,#080c18 80%); }
+.atomSky[data-wallpaper="Sun"]::after { width:clamp(62px,9vw,146px); background:radial-gradient(circle at 39% 30%,#fff8c4,#ffce6b 48%,#eb863b 84%); box-shadow:0 0 24px #ffc363bb,0 0 80px #ef883c88; }
+.atomSky[data-wallpaper="Sun"] .eclipseLimb { inset:69% -15% -61% -15%; background:linear-gradient(#422d36,#0a111f 33%); border-radius:50%; }
+.atomSky[data-wallpaper="Galaxy"]::before { filter:saturate(1.55) brightness(1.08); }
+.atomSky[data-wallpaper="Galaxy"]::after,.atomSky[data-wallpaper="Galaxy"] .eclipseLimb { display:none; }
+.atomSky[data-wallpaper="Saturn"]::before { filter:none; background:radial-gradient(ellipse at 74% 21%,#35334e,#13172a 30%,#080c19 70%); }
+.atomSky[data-wallpaper="Saturn"]::after { display:none; }
+.atomSky[data-wallpaper="Saturn"] .eclipseLimb { inset:9% 15% auto auto; width:clamp(55px,8vw,125px); aspect-ratio:1; border-radius:50%; transform:rotate(-18deg); background:linear-gradient(165deg,#ffffff66,transparent 50%,#291d32bb),repeating-linear-gradient(0deg,#b99a7e 0 8%,#ccab87 10% 17%,#a78370 20% 25%); }
+.atomSky[data-wallpaper="Saturn"] .eclipseLimb::after { content:""; position:absolute; inset:30% -49%; border-radius:50%; border:4px solid #d4ba9c; border-top-color:transparent; box-shadow:0 2px 0 #87768c; }
+@keyframes atomSolarPath {from{transform:translate(-3vw,1vh)}to{transform:translate(3vw,4vh)}}
+@keyframes atomSaturnPath {from{transform:translate(-3vw,1vh) rotate(-20deg)}to{transform:translate(3vw,4vh) rotate(-11deg)}}
+@media(prefers-reduced-motion:no-preference){
+ .app:not(.reduceMotion) .atomSky[data-wallpaper="Sun"]::after { animation:atomSolarPath 18s ease-in-out infinite alternate; }
+ .app:not(.reduceMotion) .atomSky[data-wallpaper="Saturn"] .eclipseLimb { animation:atomSaturnPath 20s ease-in-out infinite alternate; }
+}
