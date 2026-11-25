@@ -266,3 +266,5 @@
  .app:not(.reduceMotion) .atomSky[data-wallpaper="Sun"]::after { animation:atomSolarPath 18s ease-in-out infinite alternate; }
  .app:not(.reduceMotion) .atomSky[data-wallpaper="Saturn"] .eclipseLimb { animation:atomSaturnPath 20s ease-in-out infinite alternate; }
 }
+.atomHome .hero .atomWordmark { display:flex; align-items:center; justify-content:center; gap:.12em; padding-left:0; }
+.atomWordmark img { width:.88em; height:.88em; flex:none; }
