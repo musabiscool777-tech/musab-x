@@ -321,3 +321,38 @@
 .tutorStyles button[aria-pressed=true] { background:#423767; color:#fff; border-color:#c5adff; }
 .tutorTurn { margin:10px 0; border:0; border-inline-start:3px solid #6fbbb7; border-radius:6px; background:color-mix(in srgb,#62c8bd 9%,var(--panel)); padding:12px 16px; }
 .tutorTurn[data-role=assistant] { border-color:#ac91ef; background:color-mix(in srgb,#aa88ef 10%,var(--panel)); }
+.app.astraStudyPage { display:block; }
+.astraChat { display:flex; width:100%; height:calc(100dvh - 150px); min-height:500px; background:#101010; color:#ececec; border-radius:12px; overflow:hidden; font:15px/1.6 Inter,system-ui,sans-serif; }
+.astraStudyPage .astraChat { height:100dvh; min-height:0; border-radius:0; }
+.content:has(>.astraChat) { max-width:none; padding:0; }
+.astraChatList { width:250px; flex:none; padding:22px 14px; background:#171717; display:flex; flex-direction:column; gap:12px; }
+.astraChatList a { color:#c9c9c9; text-decoration:none; font-size:13px; }
+.astraChatList .astraBrand {display:flex;align-items:center;gap:10px;font-size:23px;font-weight:650;color:white}
+.astraChatList button { display:flex; align-items:center; gap:10px; width:100%; border-radius:9px; padding:9px 10px; text-align:left; color:#ddd; background:transparent; }
+.astraChatList button:hover,.astraChatList [aria-current=page] {background:#292929}
+.astraChatList p,.astraChatList small {color:#aaa;font-size:12px;margin:12px 8px 0}
+.astraRecents {flex:1;overflow:auto;min-height:0}
+.astraRecents span {overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.astraRecents svg {flex:none}
+.astraChatMain {display:flex;flex-direction:column;min-width:0;flex:1}
+.astraChatMain header {display:flex;align-items:center;padding:12px 18px;gap:12px}
+.astraChatMain header h1 {font-size:18px;margin:0;flex:1;letter-spacing:0}
+.astraMessages {flex:1;overflow:auto;padding:24px max(20px,calc((100% - 760px)/2));}
+.astraMessage {padding:18px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.astraMessage strong {font-size:12px;color:#b5b5b5}
+.astraMessage.user {margin:10px 0 10px auto;max-width:85%;width:fit-content;background:#1c4077;border-radius:24px;padding:14px 20px}
+.astraMessage.user strong {display:none}
+.astraWelcome {text-align:center;margin:6vh auto}
+.astraWelcome h2 {font-size:28px;font-weight:550}
+.astraWelcome p {color:#aaa}
+.astraComposerWrap {max-width:800px;width:100%;margin:0 auto;padding:12px 20px 16px}
+.astraComposer {background:#252525;border:1px solid #363636;border-radius:26px;padding:14px 16px}
+.astraComposer textarea {width:100%;border:0;resize:vertical;max-height:180px;background:transparent;color:#eee;outline:none;font:inherit}
+.astraComposer>div {display:flex;align-items:center;justify-content:space-between;gap:12px}
+.astraComposer select {background:#252525;color:#ccc;border:0;padding:6px;font-size:12px}
+.astraComposer button {display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:#3270cc;color:white}
+.astraComposer button:disabled {opacity:.45}
+.astraComposerWrap small {display:block;text-align:center;color:#999;font-size:10px;margin-top:8px}
+.astraThinking {color:#b9b9b9;padding:14px 0}
+@media(min-width:761px){.astraChatMain header>button:first-child {display:none}}
+@media(max-width:760px){.astraChatList{display:none}.showChatList .astraChatList{display:flex;width:200px}.showChatList .astraChatMain{min-width:100px}.astraMessages{padding:12px 18px}.astraWelcome h2{font-size:22px}.astraComposerWrap{padding:10px}}

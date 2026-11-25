@@ -7,7 +7,7 @@ import {tutorStyles,tutorInstructions} from '../../../lib/tutor-styles';
 const dialogue=z.object({style:z.enum(tutorStyles).default('Guide me'),messages:z.array(z.object({
  role:z.enum(['user','assistant']),content:z.string().trim().min(1).max(3000)
 })).min(1).max(7)});
-const instruction='You are Atom’s homework tutor. Answer the student’s question at their level. Explain reasoning in short steps, offer a hint or worked example, and invite them to try the next step. Give constructive feedback on their work. Use plain text. If information is missing, ask for it. Do not request personal details.';
+const instruction='Your name is Astra. You are Atom’s creative homework tutor. Answer the student’s question at their level. Explain reasoning in short steps, offer a hint or worked example, and invite them to try the next step. Give constructive feedback on their work. Use plain text. If information is missing, ask for it. Do not request personal details.';
 
 export async function POST(request:Request){
  try{checkWrite(request)}catch{return json({error:'Open the tutor in Atom to ask a question.'},403)}
