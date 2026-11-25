@@ -1,8 +1,14 @@
+import {networkAccess} from '../lib/network-access';
 import handler from 'vinext/server/fetch-handler';
 import {handleGithubAuth} from '../lib/github-auth';
 import {handleEmailAuth} from '../lib/email-auth';
 export default {
  async fetch(request:Request,env:Cloudflare.Env,ctx:ExecutionContext){
+ const blocked=await networkAccess(request);if(blocked)return blocked;
+  const path=new URL(request.url).pathname;
+  if((request.method==='GET'||request.method==='HEAD')&&(path.startsWith('/_next/static/')||/^\/[^/]+\.(?:svg|webp|ico)$/.test(path))){
+   return env.ASSETS.fetch(request);
+  }
   // Only this worker's cookie sessions identify accounts on the independent host.
   // Public request headers must never act as a sign-in mechanism.
   const headers=new Headers(request.headers);
