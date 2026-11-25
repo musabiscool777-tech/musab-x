@@ -34,7 +34,13 @@ async function initialise(){
    frame.frame.hidden=true;
    const error=new Error('The website could not load. Expand Technical details below to see the error.');error.details=String(doc.getElementById('errorTrace').value||'').slice(0,8000);fail(error);return;
   }
-  let searchFallback=null;try{searchFallback=blockedGoogleSearch(frame.url.href,doc?.body?.innerText||'')}catch{}
+  let searchFallback=null;
+  try{
+   const site=frame.url;
+   if(/(^|\.)google\.com$/i.test(site.hostname)&&(site.pathname==='/search'||site.pathname.startsWith('/sorry'))){
+    searchFallback=blockedGoogleSearch(site.href,doc?.body?.innerText||'');
+   }
+  }catch{}
   if(searchFallback){frame.frame.hidden=true;status('Google blocked this search connection. Opening DuckDuckGo…');send('musab:searchfallback',{url:searchFallback});frame.go(searchFallback);return}
   frame.frame.hidden=false;box.hidden=true;document.getElementById('source').hidden=true;send('musab:loaded');
   try{send('musab:url',{url:validUrl(frame.url.href),title:doc.title.slice(0,120)})}catch{}

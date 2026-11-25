@@ -280,3 +280,10 @@
 .orbitLoader i::after { content:""; position:absolute; top:11px; right:11px; width:7px; height:7px; border-radius:50%; background:#f9e6bd; box-shadow:0 0 8px #fff0c399; }
 @keyframes atomLoadingOrbit { to { transform:rotate(360deg); } }
 @media(prefers-reduced-motion:no-preference){.app:not(.reduceMotion) .orbitLoader i {animation:atomLoadingOrbit 2.5s linear infinite}}
+.websiteLoader.startupLoader { position:fixed; z-index:75; }
+.atomBookmarks .allBookmarks { margin-left:auto; }
+.chrome .tabline { flex-wrap:nowrap; min-height:36px; height:36px; padding:0 8px 0 2px; }
+.chrome .tabline .homeTools { width:auto; margin:0; }
+.app.dark .chrome { background:linear-gradient(100deg,#292c32,#101217 68%); }
+.chrome .tab.active { border-radius:7px 7px 0 0; box-shadow:inset 0 -2px var(--muted); }
+@media(max-width:540px){.chrome .tabline{gap:1px}.chrome .tabline .homeTools button{padding:0 3px}.chrome .tabline .tabSearchButton{display:none}.atomBookmarks small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
