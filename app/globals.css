@@ -230,3 +230,21 @@
 .homeShortcut:hover,.homeShortcut:focus-visible { border-color:#a6afc6; background:linear-gradient(140deg,#55575e,#202228 65%); }
 .homeClock { display:block; min-height:1.4em; text-align:center; color:#b5b7bf; margin:26px auto; font-size:13px; font-variant-numeric:tabular-nums; }
 @media(max-width:600px){.homeShortcut{width:82px;min-height:76px}.atomHome .hero{padding-top:48px}}
+.tabline .homeTools { margin-inline-start:auto; flex:0 0 auto; flex-wrap:nowrap; align-items:center; gap:2px; }
+.tabline .homeTools button { display:grid; place-items:center; width:28px; height:28px; padding:0; border:0; border-radius:6px; color:var(--muted); background:transparent; }
+.tabline .homeTools button:is(:hover,:focus-visible,[aria-current="page"]) { background:var(--input); color:var(--fg); }
+.settingsStack { max-width:850px; margin-inline:auto; }
+.liveStars { position:absolute; inset:-5%; opacity:.55;
+ background:radial-gradient(circle at 18px 31px,#e4ecff 1px,transparent 1.5px) 0 0/217px 151px,
+ radial-gradient(circle at 106px 84px,#c3cede .7px,transparent 1.2px) 0 0/159px 247px; }
+.shootingStar {position:absolute;left:8%;top:8%;width:85px;height:2px;opacity:0;border-radius:50%;background:linear-gradient(90deg,transparent,#e6efff); }
+@keyframes atomStarlight { from {transform:translate(0,0);opacity:.28} to {transform:translate(22px,9px);opacity:.8} }
+@keyframes atomMeteor { 0%,38%,55%,100%{opacity:0} 38%{transform:translate(0,0) rotate(18deg)} 41%{opacity:.85} 55%,100%{transform:translate(41vw,13vw) rotate(18deg)} }
+@media(prefers-reduced-motion:no-preference){
+ .app:not(.reduceMotion) .liveStars { animation:atomStarlight 8s ease-in-out infinite alternate; }
+ .app:not(.reduceMotion) .shootingStar { animation:atomMeteor 13s linear -4s infinite; }
+}
+@media(max-width:640px){
+ .tabline:has(.homeTools){flex-wrap:wrap;height:auto}
+ .tabline .homeTools{width:100%;justify-content:flex-end}
+}

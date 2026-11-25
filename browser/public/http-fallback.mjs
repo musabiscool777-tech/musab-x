@@ -24,12 +24,6 @@ export function withHttpFallback(Base, fetcher = (...args) => fetch(...args)) {
   async httpRequest(url,method,body,headers,signal) {
    if(signal?.aborted)throw signal.reason||new DOMException('Aborted','AbortError');
    const encodedBody=await encodeBody(body);
-   // Match Epoxy's browser-provided user agent on the HTTP path as well.
-   if(globalThis.navigator?.userAgent){
-    headers={...headers};
-    for(const key of Object.keys(headers))if(key.toLowerCase()==='user-agent')delete headers[key];
-    headers['User-Agent']=globalThis.navigator.userAgent;
-   }
    const response=await fetcher('/http',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:url.href,method,headers,body:encodedBody}),signal});
    if(!response.ok)throw new Error((await response.text()).slice(0,600)||'HTTP relay unavailable');
    const encoded=response.headers.get('X-Musab-Response');
@@ -44,6 +38,21 @@ export function withHttpFallback(Base, fetcher = (...args) => fetch(...args)) {
    // Domain metadata remains local even when other requests use HTTP mode.
    if(url.href==='https://publicsuffix.org/list/public_suffix_list.dat')return super.request(url,method,body,headers,signal);
    const https=url.protocol==='https:';
+   headers={...headers};
+   const device=globalThis.navigator;
+   if(device?.userAgent){
+    for(const key of Object.keys(headers))if(key.toLowerCase()==='user-agent')delete headers[key];
+    headers['User-Agent']=device.userAgent;
+   }
+   const hints=device?.userAgentData;
+   if(https&&hints){
+    for(const key of Object.keys(headers)){
+     if(['sec-ch-ua-platform','sec-ch-ua-mobile'].includes(key.toLowerCase()))delete headers[key];
+    }
+    if(typeof hints.mobile==='boolean')headers['Sec-CH-UA-Mobile']=hints.mobile?'?1':'?0';
+    if(typeof hints.platform==='string'&&/^[a-z0-9 ._-]{1,64}$/i.test(hints.platform))
+     headers['Sec-CH-UA-Platform']='"'+hints.platform+'"';
+   }
    // Select HTTP BEFORE sending a write. A failed write is never replayed.
    if(https&&(this.httpMode||!READS.has(method)))return this.httpRequest(url,method,body,headers,signal);
    try{return await super.request(url,method,body,headers,signal)}

@@ -48,6 +48,22 @@ try {
  assert.equal(result.status,206);assert.equal(await new Response(result.body).text(),'Video website');assert.equal(relayed,1);assert.equal(baseCalls,1);
  await transport.request(new URL('https://youtube.com/'),'POST','field=☀',{});assert.equal(relayed,2);assert.equal(Buffer.from(payloads.at(-1).body,'base64').toString(),'field=☀');assert.equal(baseCalls,1,'Writes never enter the failing Wisp client');
  await transport.request(new URL('https://youtube.com/'),'GET',null,{});assert.equal(baseCalls,1,'Subsequent reads use the same working HTTP path');
+ const originalHints=Object.getOwnPropertyDescriptor(navigator,'userAgentData');
+ try{
+  Object.defineProperty(navigator,'userAgentData',{configurable:true,value:{platform:'Android',mobile:true}});
+  let sent;
+  class Primary {async request(url,method,body,headers){sent=headers;return {status:200}}}
+  const Native=withHttpFallback(Primary);
+  await new Native().request(new URL('https://example.com'),'GET',null,{'sec-ch-ua-mobile':'?0'});
+  assert.equal(sent['Sec-CH-UA-Mobile'],'?1');
+  assert.equal(sent['Sec-CH-UA-Platform'],'"Android"');
+  assert.equal(sent['sec-ch-ua-mobile'],undefined);
+  await transport.request(new URL('https://youtube.com/'),'GET',null,{});
+  assert.equal(payloads.at(-1).headers['Sec-CH-UA-Platform'],'"Android"');
+ }finally{
+  if(originalHints)Object.defineProperty(navigator,'userAgentData',originalHints);
+  else delete navigator.userAgentData;
+ }
  const firstWrite=new Transport();await firstWrite.request(new URL('https://youtube.com/'),'POST',new Uint8Array([0,255,128]),{});assert.equal(baseCalls,1,'First writes go through HTTP before any Wisp attempt');assert.deepEqual([...Buffer.from(payloads.at(-1).body,'base64')],[0,255,128]);
  const streamed=new Transport();await streamed.request(new URL('https://youtube.com/'),'POST',new ReadableStream({start(c){c.enqueue(new Uint8Array([1,2]));c.enqueue(new Uint8Array([3]));c.close()}}),{});assert.deepEqual([...Buffer.from(payloads.at(-1).body,'base64')],[1,2,3]);
  const cancelled=new AbortController();cancelled.abort();const before=relayed;await assert.rejects(()=>transport.request(new URL('https://youtube.com/'),'GET',null,{},cancelled.signal));assert.equal(relayed,before);
