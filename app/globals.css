@@ -268,3 +268,15 @@
 }
 .atomHome .hero .atomWordmark { display:flex; align-items:center; justify-content:center; gap:.12em; padding-left:0; }
 .atomWordmark img { width:.88em; height:.88em; flex:none; }
+.tabline .homeTools button { display:inline-flex; align-items:center; gap:5px; width:auto; padding:0 6px; font-size:12px; line-height:1; }
+@media(max-width:850px){
+ .tabline .homeTools button:not([aria-label="Settings"]) span { display:none; }
+}
+.websiteLoader { position:absolute; inset:0; z-index:2; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:11px; background:radial-gradient(ellipse at center,#1e2132,#0b0e16 65%); color:#eff2ff; }
+.websiteLoader strong { font-size:16px; font-weight:540; }
+.websiteLoader small { color:#bdc5de; font-size:12px; }
+.orbitLoader { position:relative; display:grid; place-items:center; width:100px; height:100px; margin-bottom:6px; }
+.orbitLoader i { position:absolute; inset:0; border:1px solid #becfff38; border-radius:50%; }
+.orbitLoader i::after { content:""; position:absolute; top:11px; right:11px; width:7px; height:7px; border-radius:50%; background:#f9e6bd; box-shadow:0 0 8px #fff0c399; }
+@keyframes atomLoadingOrbit { to { transform:rotate(360deg); } }
+@media(prefers-reduced-motion:no-preference){.app:not(.reduceMotion) .orbitLoader i {animation:atomLoadingOrbit 2.5s linear infinite}}
